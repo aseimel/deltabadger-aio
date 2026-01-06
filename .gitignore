@@ -1,7 +1,20 @@
+# Coverage
+/coverage
+
+# Credentials
+/config/credentials/*.key
+/config/credentials.yml.enc
+
+# Database
+/db/*.sqlite3
+/db/*.sqlite3-*
+*.dump
+*.sql
+
 # Dependencies
 /.bundle
 /node_modules
-/vendor/bundle
+/vendor
 
 # Environment variables
 .env
@@ -30,6 +43,11 @@ yarn-debug.log*
 /config/master.key
 .byebug_history
 
+# Spring
+/tmp/pids/*
+!/tmp/pids/.keep
+spring/*.pid
+
 # OS files
 .DS_Store
 
@@ -40,3 +58,7 @@ yarn-debug.log*
 .ruby-lsp
 .circleci
 .claude
+
+# Storage
+/storage/*
+!/storage/.keep
