@@ -7,9 +7,9 @@ Version 0.9.0 was released quickly under pressure from the [MiCA regulations](ht
 
 ### What next
 
-We're working on releasing the app on Umbrel first. If the community stays strong, we'll make a simpler installer for other platforms.
+The 1.0.0 will include significant updates, to make it a standalone app that you can run without Docker. The Umbrel app comes next.
 
-Are you a developer? Jump on the [Telegram channel](https://t.me/deltabadgerchat) and help build the best DCA bot out there.
+Join our [Telegram channel](https://t.me/deltabadgerchat) and help us build the best DCA bot out there.
 
 ## Running with Docker
 
