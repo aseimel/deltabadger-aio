@@ -4,6 +4,7 @@
 
 set -e
 
+export PATH="/usr/lib/postgresql/15/bin:$PATH"
 DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
 DB_INITIALIZED_FLAG="${DATA_DIR}/secrets/.db_initialized"
 

@@ -3,6 +3,9 @@
 
 set -e
 
+# Add PostgreSQL binaries to PATH
+export PATH="/usr/lib/postgresql/15/bin:$PATH"
+
 DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
 PGDATA="${DATA_DIR}/postgresql/data"
 

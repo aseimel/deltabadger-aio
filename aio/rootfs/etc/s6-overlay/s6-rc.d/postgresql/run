@@ -3,6 +3,7 @@
 
 exec 2>&1
 
+export PATH="/usr/lib/postgresql/15/bin:$PATH"
 PGDATA="${DELTABADGER_DATA_DIR:-/data}/postgresql/data"
 
 # Ensure correct ownership

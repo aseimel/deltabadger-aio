@@ -4,37 +4,17 @@
   <Repository>ghcr.io/aseimel/deltabadger-aio:latest</Repository>
   <Registry>https://github.com/aseimel/deltabadger-aio/pkgs/container/deltabadger-aio</Registry>
   <Network>bridge</Network>
-  <MyIP/>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
   <Support>https://github.com/aseimel/deltabadger-aio/issues</Support>
   <Project>https://github.com/aseimel/deltabadger-aio</Project>
-  <Overview>Deltabadger is a self-hosted Dollar Cost Averaging (DCA) bot for cryptocurrency. Automate recurring purchases across multiple exchanges including Binance, Coinbase, Kraken, Bitstamp, Gemini, KuCoin, and more.&#xD;
-&#xD;
-This All-in-One container includes PostgreSQL, Redis, and all required services - no external dependencies needed.&#xD;
-&#xD;
-First-run setup: Access the web UI at http://[IP]:3000 to create your account and configure your exchange API keys.</Overview>
+  <Overview>Deltabadger is a self-hosted Dollar Cost Averaging (DCA) bot for cryptocurrency. Automate recurring purchases across multiple exchanges including Binance, Coinbase, Kraken, Bitstamp, Gemini, KuCoin, and more. This All-in-One container includes PostgreSQL, Redis, and all required services - no external dependencies needed.</Overview>
   <Category>Crypto: Finance: Tools:</Category>
-  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/aseimel/deltabadger-aio/main/unraid/deltabadger-aio.xml</TemplateURL>
+  <WebUI>http://[IP]:[PORT:3742]/</WebUI>
   <Icon>https://raw.githubusercontent.com/aseimel/deltabadger-aio/main/app/assets/images/icon.svg</Icon>
   <ExtraParams>--restart=unless-stopped</ExtraParams>
-  <PostArgs/>
-  <CPUset/>
-  <DateInstalled></DateInstalled>
-  <DonateText/>
-  <DonateLink/>
-  <Requires/>
   <Config Name="Web UI Port" Target="3000" Default="3742" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">3742</Config>
   <Config Name="Data Storage" Target="/data" Default="/mnt/user/docker/appdata/deltabadger-aio" Mode="rw" Description="Persistent data storage for PostgreSQL, Redis, and app secrets" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/docker/appdata/deltabadger-aio</Config>
-  <Config Name="App Root URL" Target="APP_ROOT_URL" Default="http://localhost:3000" Mode="" Description="Full URL where Deltabadger is accessible (e.g., http://192.168.1.100:3000 or https://dca.yourdomain.com)" Type="Variable" Display="always" Required="true" Mask="false">http://localhost:3000</Config>
-  <Config Name="SMTP Address" Target="SMTP_ADDRESS" Default="" Mode="" Description="SMTP server address for email notifications (optional)" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
-  <Config Name="SMTP Port" Target="SMTP_PORT" Default="587" Mode="" Description="SMTP server port" Type="Variable" Display="advanced" Required="false" Mask="false">587</Config>
-  <Config Name="SMTP Username" Target="SMTP_USER_NAME" Default="" Mode="" Description="SMTP authentication username" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
-  <Config Name="SMTP Password" Target="SMTP_PASSWORD" Default="" Mode="" Description="SMTP authentication password" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
-  <Config Name="SMTP Domain" Target="SMTP_DOMAIN" Default="" Mode="" Description="SMTP HELO domain" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
-  <Config Name="Notification Sender Email" Target="NOTIFICATIONS_SENDER" Default="noreply@localhost" Mode="" Description="From address for notification emails" Type="Variable" Display="advanced" Required="false" Mask="false">noreply@localhost</Config>
-  <Config Name="CoinGecko API Key" Target="COINGECKO_API_KEY" Default="" Mode="" Description="CoinGecko API key for price data (optional, free tier available)" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
-  <Config Name="Orders Frequency Limit" Target="ORDERS_FREQUENCY_LIMIT" Default="60" Mode="" Description="Minimum seconds between orders (default: 60)" Type="Variable" Display="advanced" Required="false" Mask="false">60</Config>
+  <Config Name="App URL" Target="APP_ROOT_URL" Default="http://localhost:3000" Mode="" Description="Change localhost to your Unraid IP (e.g., http://192.168.1.100:3742). Keep port 3000 internally." Type="Variable" Display="always" Required="true" Mask="false">http://localhost:3000</Config>
   <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="Container timezone" Type="Variable" Display="advanced" Required="false" Mask="false">America/New_York</Config>
 </Container>
