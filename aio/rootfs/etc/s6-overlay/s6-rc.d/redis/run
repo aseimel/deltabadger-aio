@@ -1,0 +1,15 @@
+#!/command/with-contenv bash
+# Redis service
+
+exec 2>&1
+
+REDIS_DIR="${DELTABADGER_DATA_DIR:-/data}/redis"
+mkdir -p "$REDIS_DIR"
+
+exec redis-server \
+  --dir "$REDIS_DIR" \
+  --appendonly yes \
+  --maxmemory 256mb \
+  --maxmemory-policy allkeys-lru \
+  --daemonize no \
+  --bind 127.0.0.1

@@ -1,0 +1,20 @@
+#!/command/with-contenv bash
+# Rails (Puma) service
+# Depends on: postgresql, redis, init-database
+
+exec 2>&1
+
+cd /app
+
+# Clean up stale PID
+rm -f tmp/pids/server.pid
+
+# Symlink storage to data volume if not already done
+DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
+if [ ! -L /app/storage ]; then
+    rm -rf /app/storage 2>/dev/null || true
+    ln -sf "$DATA_DIR/app/storage" /app/storage
+fi
+
+echo "Starting Puma..."
+exec bundle exec puma -C config/puma.rb

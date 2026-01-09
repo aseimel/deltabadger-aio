@@ -1,0 +1,59 @@
+#!/command/with-contenv bash
+# Initialize Rails database after PostgreSQL is ready
+# This runs as a oneshot after postgresql longrun service is up
+
+set -e
+
+DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
+DB_INITIALIZED_FLAG="${DATA_DIR}/secrets/.db_initialized"
+
+# Wait for PostgreSQL to be ready (it should be running via s6)
+echo "Waiting for PostgreSQL to be ready..."
+for i in $(seq 1 60); do
+    if pg_isready -h localhost -U postgres > /dev/null 2>&1; then
+        echo "PostgreSQL is ready"
+        break
+    fi
+    echo "Waiting for PostgreSQL... ($i/60)"
+    sleep 2
+done
+
+if ! pg_isready -h localhost -U postgres > /dev/null 2>&1; then
+    echo "ERROR: PostgreSQL not ready after 120 seconds"
+    exit 1
+fi
+
+# Create database user if needed
+DB_USER="${DB_USER:-deltabadger}"
+DB_PASSWORD="${DB_PASSWORD:-deltabadger_aio}"
+DB_NAME="${DB_NAME:-deltabadger_production}"
+
+if ! psql -h localhost -U postgres -tc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" | grep -q 1; then
+    echo "Creating database user: ${DB_USER}"
+    psql -h localhost -U postgres -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}' CREATEDB;"
+fi
+
+# Create database if needed
+if ! psql -h localhost -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1; then
+    echo "Creating database: ${DB_NAME}"
+    psql -h localhost -U postgres -c "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
+fi
+
+# Run Rails database setup
+cd /app
+
+if [ ! -f "$DB_INITIALIZED_FLAG" ]; then
+    echo "First run - loading database schema..."
+    bundle exec rails db:schema:load
+
+    # Seed basic data (ignore errors if seed fails)
+    bundle exec rails db:seed || true
+
+    touch "$DB_INITIALIZED_FLAG"
+    echo "Database schema loaded"
+else
+    echo "Running database migrations..."
+    bundle exec rails db:migrate
+fi
+
+echo "Database setup complete"

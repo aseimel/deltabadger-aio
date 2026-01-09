@@ -1,0 +1,48 @@
+#!/command/with-contenv bash
+# Initialize PostgreSQL on first run
+
+set -e
+
+DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
+PGDATA="${DATA_DIR}/postgresql/data"
+
+# Ensure directories exist with correct ownership
+mkdir -p "$PGDATA"
+mkdir -p /run/postgresql
+chown -R postgres:postgres "$PGDATA"
+chown -R postgres:postgres /run/postgresql
+chmod 700 "$PGDATA"
+
+if [ ! -f "${PGDATA}/PG_VERSION" ]; then
+    echo "First run detected - initializing PostgreSQL..."
+
+    # Initialize database cluster
+    su postgres -c "initdb -D ${PGDATA} --encoding=UTF8 --locale=C"
+
+    # Configure PostgreSQL for local connections
+    cat >> "${PGDATA}/postgresql.conf" << EOF
+
+# AIO Configuration
+listen_addresses = 'localhost'
+max_connections = 50
+shared_buffers = 128MB
+work_mem = 4MB
+maintenance_work_mem = 64MB
+effective_cache_size = 256MB
+logging_collector = off
+log_destination = 'stderr'
+EOF
+
+    # Configure authentication - trust local connections
+    cat > "${PGDATA}/pg_hba.conf" << EOF
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             postgres                                trust
+local   all             all                                     trust
+host    all             all             127.0.0.1/32            trust
+host    all             all             ::1/128                 trust
+EOF
+
+    echo "PostgreSQL initialized"
+else
+    echo "PostgreSQL data directory exists, skipping initialization"
+fi

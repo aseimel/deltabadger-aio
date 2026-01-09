@@ -1,0 +1,195 @@
+# syntax=docker/dockerfile:1
+# Deltabadger AIO - All-in-One Docker Image
+# Includes: PostgreSQL 15, Redis 7, Rails (Puma), Sidekiq
+# Usage: docker run -d -p 3000:3000 -v deltabadger-data:/data ghcr.io/aseimel/deltabadger-aio
+
+# ============================================================================
+# Stage 1: Build frontend assets (same as original)
+# ============================================================================
+FROM node:18.19.1-slim AS frontend-builder
+
+WORKDIR /app
+
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+    git \
+    python3 \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --network-timeout 100000
+
+COPY babel.config.js postcss.config.js ./
+COPY config/webpacker.yml config/webpack ./config/
+COPY app/javascript ./app/javascript
+COPY app/assets ./app/assets
+
+# ============================================================================
+# Stage 2: Build Ruby dependencies and compile assets (same as original)
+# ============================================================================
+FROM ruby:3.2.3-slim AS builder
+
+WORKDIR /app
+
+ENV RAILS_ENV=production \
+    NODE_ENV=production \
+    NODE_OPTIONS=--openssl-legacy-provider \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT=1 \
+    BUNDLE_PATH=/app/vendor/bundle
+
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    git \
+    curl \
+    libvips-dev \
+    libsodium-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g yarn
+
+COPY Gemfile Gemfile.lock ./
+
+RUN bundle config set --local without 'development test' && \
+    bundle install --jobs 4 --retry 3 && \
+    rm -rf /app/vendor/bundle/ruby/*/cache/*.gem && \
+    find /app/vendor/bundle/ruby/*/gems/ -name "*.c" -delete && \
+    find /app/vendor/bundle/ruby/*/gems/ -name "*.o" -delete
+
+COPY --from=frontend-builder /app/node_modules ./node_modules
+COPY . .
+
+RUN mkdir -p /app/tmp/cache/assets /app/tmp/pids /app/log
+
+RUN YARN_CACHE_FOLDER=/tmp/yarn-cache \
+    SECRET_KEY_BASE=placeholder \
+    DEVISE_SECRET_KEY=placeholder \
+    RAILS_ENV=production \
+    REDIS_SIDEKIQ_URL=redis://localhost:6379/0 \
+    REDIS_CABLE_URL=redis://localhost:6379/1 \
+    REDIS_CACHE_URL=redis://localhost:6379/2 \
+    APP_ENCRYPTION_KEY=placeholder1234567890123456 \
+    APP_ROOT_URL=http://localhost:3000 \
+    HOME_PAGE_URL=http://localhost:3000 \
+    SMTP_ADDRESS=localhost \
+    SMTP_DOMAIN=localhost \
+    SMTP_PORT=25 \
+    SMTP_USER_NAME=placeholder \
+    SMTP_PASSWORD=placeholder \
+    NOTIFICATIONS_SENDER=placeholder@example.com \
+    COINGECKO_API_KEY=placeholder \
+    ORDERS_FREQUENCY_LIMIT=60 \
+    bundle exec rails assets:precompile
+
+# ============================================================================
+# Stage 3: AIO Runtime Image with embedded PostgreSQL, Redis, and s6-overlay
+# ============================================================================
+FROM ruby:3.2.3-slim AS runtime
+
+LABEL maintainer="Deltabadger AIO"
+LABEL org.opencontainers.image.title="Deltabadger AIO"
+LABEL org.opencontainers.image.description="Crypto DCA Bot - All-in-One Container with embedded PostgreSQL and Redis"
+LABEL org.opencontainers.image.source="https://github.com/aseimel/deltabadger-aio"
+
+ARG S6_OVERLAY_VERSION=3.1.6.2
+ARG TARGETARCH
+
+WORKDIR /app
+
+# Install s6-overlay based on architecture
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp/
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && rm /tmp/s6-overlay-noarch.tar.xz
+
+# Architecture-specific s6-overlay binary
+RUN apt-get update -qq && apt-get install -y --no-install-recommends curl xz-utils ca-certificates && \
+    if [ "$TARGETARCH" = "arm64" ]; then \
+        curl -L -o /tmp/s6-overlay-arch.tar.xz https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-aarch64.tar.xz; \
+    else \
+        curl -L -o /tmp/s6-overlay-arch.tar.xz https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz; \
+    fi && \
+    tar -C / -Jxpf /tmp/s6-overlay-arch.tar.xz && \
+    rm /tmp/s6-overlay-arch.tar.xz
+
+# Install runtime dependencies including PostgreSQL and Redis
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    libvips42 \
+    libsodium23 \
+    postgresql \
+    postgresql-client \
+    redis-server \
+    netcat-openbsd \
+    tzdata \
+    imagemagick \
+    openssl && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+# Set runtime environment
+ENV RAILS_ENV=production \
+    NODE_ENV=production \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT=1 \
+    BUNDLE_PATH=/app/vendor/bundle \
+    RAILS_LOG_TO_STDOUT=true \
+    RAILS_SERVE_STATIC_FILES=true \
+    MALLOC_ARENA_MAX=2 \
+    # AIO-specific defaults (can be overridden)
+    DB_HOST=localhost \
+    DB_NAME=deltabadger_production \
+    DB_USER=deltabadger \
+    DB_PASSWORD=deltabadger_aio \
+    REDIS_SIDEKIQ_URL=redis://localhost:6379/0 \
+    REDIS_CABLE_URL=redis://localhost:6379/1 \
+    REDIS_CACHE_URL=redis://localhost:6379/2 \
+    APP_ROOT_URL=http://localhost:3000 \
+    HOME_PAGE_URL=http://localhost:3000 \
+    SMTP_ADDRESS=localhost \
+    SMTP_DOMAIN=localhost \
+    SMTP_PORT=25 \
+    SMTP_USER_NAME="" \
+    SMTP_PASSWORD="" \
+    NOTIFICATIONS_SENDER=noreply@localhost \
+    ORDERS_FREQUENCY_LIMIT=60 \
+    COINGECKO_API_KEY="" \
+    # Data directory
+    DELTABADGER_DATA_DIR=/data \
+    # s6-overlay settings
+    S6_KEEP_ENV=1 \
+    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
+    S6_CMD_WAIT_FOR_SERVICES_MAXTIME=180000
+
+# Copy built artifacts from builder stage
+COPY --from=builder /app/vendor/bundle ./vendor/bundle
+COPY --from=builder /app/public/assets ./public/assets
+COPY --from=builder /app/public/packs ./public/packs
+
+# Copy application code
+COPY . .
+
+# Copy AIO-specific s6 services and scripts
+COPY aio/rootfs/ /
+
+# Create data directories and set permissions
+RUN mkdir -p /data/postgresql/data /data/redis /data/app/storage /data/secrets && \
+    mkdir -p /app/tmp/pids /app/tmp/cache /app/tmp/sockets /app/log /app/storage && \
+    mkdir -p /run/postgresql && \
+    chown -R postgres:postgres /run/postgresql && \
+    # Make all s6 scripts executable
+    chmod +x /etc/s6-overlay/scripts/* && \
+    chmod +x /etc/s6-overlay/s6-rc.d/*/run 2>/dev/null || true && \
+    chmod +x /usr/local/bin/healthcheck.sh && \
+    chmod +x /usr/local/bin/generate-secrets.sh
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=15s --start-period=180s --retries=3 \
+    CMD /usr/local/bin/healthcheck.sh
+
+ENTRYPOINT ["/init"]

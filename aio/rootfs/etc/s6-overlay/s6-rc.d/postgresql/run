@@ -1,0 +1,13 @@
+#!/command/with-contenv bash
+# PostgreSQL service
+
+exec 2>&1
+
+PGDATA="${DELTABADGER_DATA_DIR:-/data}/postgresql/data"
+
+# Ensure correct ownership
+chown -R postgres:postgres "$PGDATA"
+chown -R postgres:postgres /run/postgresql
+
+# Start PostgreSQL
+exec s6-setuidgid postgres postgres -D "$PGDATA"

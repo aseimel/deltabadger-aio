@@ -1,0 +1,13 @@
+#!/command/with-contenv bash
+# Sidekiq service
+# Depends on: postgresql, redis, rails
+
+exec 2>&1
+
+cd /app
+
+# Brief delay to let Rails fully start
+sleep 5
+
+echo "Starting Sidekiq..."
+exec bundle exec sidekiq -C config/sidekiq.yml
