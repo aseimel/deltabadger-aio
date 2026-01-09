@@ -5,12 +5,19 @@
 exec 2>&1
 
 cd /app
+DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
+
+# Source secrets
+if [ -f "${DATA_DIR}/secrets/.env.secrets" ]; then
+    set -a
+    source "${DATA_DIR}/secrets/.env.secrets"
+    set +a
+fi
 
 # Clean up stale PID
 rm -f tmp/pids/server.pid
 
 # Symlink storage to data volume if not already done
-DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
 if [ ! -L /app/storage ]; then
     rm -rf /app/storage 2>/dev/null || true
     ln -sf "$DATA_DIR/app/storage" /app/storage

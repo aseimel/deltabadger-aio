@@ -5,6 +5,14 @@
 exec 2>&1
 
 cd /app
+DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
+
+# Source secrets
+if [ -f "${DATA_DIR}/secrets/.env.secrets" ]; then
+    set -a
+    source "${DATA_DIR}/secrets/.env.secrets"
+    set +a
+fi
 
 # Brief delay to let Rails fully start
 sleep 5

@@ -7,6 +7,14 @@ set -e
 export PATH="/usr/lib/postgresql/15/bin:$PATH"
 DATA_DIR="${DELTABADGER_DATA_DIR:-/data}"
 DB_INITIALIZED_FLAG="${DATA_DIR}/secrets/.db_initialized"
+SECRETS_FILE="${DATA_DIR}/secrets/.env.secrets"
+
+# Source secrets file to ensure they're available for Rails
+if [ -f "$SECRETS_FILE" ]; then
+    set -a
+    source "$SECRETS_FILE"
+    set +a
+fi
 
 # Wait for PostgreSQL to be ready (it should be running via s6)
 echo "Waiting for PostgreSQL to be ready..."
