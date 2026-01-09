@@ -1,45 +1,116 @@
-# Deltabadger
+# Deltabadger AIO (All-in-One)
+
+> **This is a fork and repackage of [Deltabadger](https://github.com/deltabadger/deltabadger).**
+>
+> All credit for the original application goes to the Deltabadger team. This repository simply provides an All-in-One Docker container with embedded PostgreSQL and Redis for easier deployment, particularly on systems like Unraid.
+
+---
+
 Auto-DCA for crypto. Automate your Dollar Cost Averaging strategy across multiple exchanges. As a service, [Deltabadger](https://deltabadger.com) helped users invest over $72 million into Bitcoin and other digital assets. Now it's free and open-source.
 
 ![dashboard](https://github.com/user-attachments/assets/c5855ad4-78e4-4093-8007-539a919cd139)
 
 ![Frame 306](https://github.com/user-attachments/assets/adbdb6f3-548e-46ea-bd6f-6c9474f60c19)
 
-## About this release
+## What's Different in This Fork?
 
-Version 0.9.0 was released quickly under pressure from the [MiCA regulations](https://janklosowski.substack.com/p/eu-killed-my-company-i-open-source), so it's not a one-click standalone yet, but it's working, and if you encounter any issues, please join us on the [Telegram channel](https://t.me/deltabadgerchat) and we'll help.
+This fork provides a single **All-in-One (AIO) container** that bundles:
+- PostgreSQL 15
+- Redis 7
+- Rails (Puma) web server
+- Sidekiq background worker
+- s6-overlay for process supervision
 
-### What next
+**No external database or Redis required** - just run the container and go.
 
-The 1.0.0 will include significant updates, to make it a standalone app that you can run without Docker. The Umbrel app comes next. Going from an online service to a standalone app requires deep changes, and a lot of testing, but we're already on the way there.
+## Quick Start (AIO Container)
 
-If you want to help us to build the best DCA bot on the planet, join [Telegram channel](https://t.me/deltabadgerchat) and say "hi".
+```bash
+docker run -d \
+  --name deltabadger \
+  -p 3000:3000 \
+  -v /path/to/data:/data \
+  -e APP_ROOT_URL=http://your-server-ip:3000 \
+  ghcr.io/aseimel/deltabadger-aio:latest
+```
 
-## Running with Docker
+Access the app at `http://localhost:3000` and create your account.
+
+### Persistent Data
+
+Mount a volume to `/data` to persist:
+- PostgreSQL database
+- Redis data
+- Application secrets (auto-generated on first run)
+
+## Unraid Installation
+
+An Unraid template is available for easy installation:
+
+1. In Unraid, go to **Docker** tab
+2. Click **Add Container**
+3. Toggle to **XML View** (top right)
+4. Paste the contents from [unraid/deltabadger-aio.xml](unraid/deltabadger-aio.xml)
+5. Click **Apply**
+
+Or manually configure:
+- **Repository:** `ghcr.io/aseimel/deltabadger-aio:latest`
+- **Port:** `3000`
+- **Path:** `/mnt/user/docker/appdata/deltabadger-aio` -> `/data`
+- **Variable:** `APP_ROOT_URL` = `http://YOUR_UNRAID_IP:3000`
+
+## Docker Compose (AIO)
+
+```yaml
+services:
+  deltabadger:
+    image: ghcr.io/aseimel/deltabadger-aio:latest
+    container_name: deltabadger
+    ports:
+      - "3000:3000"
+    volumes:
+      - deltabadger-data:/data
+    environment:
+      - APP_ROOT_URL=http://localhost:3000
+      - TZ=America/New_York
+    restart: unless-stopped
+
+volumes:
+  deltabadger-data:
+```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_ROOT_URL` | `http://localhost:3000` | Full URL where the app is accessible |
+| `TZ` | `UTC` | Timezone |
+| `SMTP_ADDRESS` | - | SMTP server for email notifications |
+| `SMTP_PORT` | `25` | SMTP port |
+| `SMTP_USER_NAME` | - | SMTP username |
+| `SMTP_PASSWORD` | - | SMTP password |
+| `SMTP_DOMAIN` | `localhost` | SMTP HELO domain |
+| `NOTIFICATIONS_SENDER` | `noreply@localhost` | From address for emails |
+| `COINGECKO_API_KEY` | - | CoinGecko API key (optional) |
+| `ORDERS_FREQUENCY_LIMIT` | `60` | Minimum seconds between orders |
+
+Secrets (`SECRET_KEY_BASE`, `DEVISE_SECRET_KEY`, `APP_ENCRYPTION_KEY`) are auto-generated on first run and stored in `/data/secrets/`.
+
+---
+
+## Original Docker Compose Setup
+
+If you prefer the original multi-container setup with separate PostgreSQL and Redis, see the [upstream repository](https://github.com/deltabadger/deltabadger).
 
 ### Prerequisites
 
 Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) for your operating system.
 
-After installation, make sure Docker is running (you should see the Docker icon in your system tray/menu bar).
-
-To run the app locally, open a terminal in the /deltabadger folder, and:
-
 ### 1. Create environment file
-
-macOS/Linux:
 
 ```bash
 cp .env.docker.example .env.docker
 ```
-
-Windows (Command Prompt):
-
-```cmd
-copy .env.docker.example .env.docker
-```
-
-The example file works out of the box for local use.
 
 ### 2. Start the app
 
@@ -47,82 +118,7 @@ The example file works out of the box for local use.
 docker compose up
 ```
 
-First run takes a few minutes to download images and build. Once you see logs from `web` and `sidekiq`, the app is ready.
-
-Access the app at `http://localhost:3000`.
-
-> **Tip:** Add `-d` to run in the background: `docker compose up -d`
-
-### Stopping the app
-
-```bash
-docker compose down
-```
-
-### Docker Commands Reference
-
-**Start the app:**
-
-```bash
-docker compose up
-```
-
-Add `-d` to run in background. Add `--build` to rebuild after code changes.
-
-**Stop the app:**
-
-```bash
-docker compose down
-```
-
-Stops and removes all containers and networks.
-
-**Rebuild after changes:**
-
-```bash
-docker compose build
-```
-
-Add `--no-cache` to force a complete rebuild.
-
-**View logs:**
-
-```bash
-docker compose logs -f
-```
-
-Add service name to filter: `docker compose logs -f web`
-
-### Starting Fresh
-
-If something goes wrong and you want to reset everything:
-
-```bash
-# Stop all containers
-docker compose down
-
-# Remove data volumes (deletes all data!)
-docker volume rm deltabadger_postgres_data deltabadger_redis_data deltabadger_storage deltabadger_logs
-```
-
-> **Note:** Volume names may vary. Run `docker volume ls` to see all volumes.
-
-Nuclear option — removes all unused Docker data:
-
-```bash
-docker system prune -a --volumes
-```
-
-### Production Secrets
-
-If you want to run it on an online server, generate proper secrets:
-
-```bash
-openssl rand -hex 64  # For SECRET_KEY_BASE and DEVISE_SECRET_KEY
-openssl rand -hex 16  # For APP_ENCRYPTION_KEY
-```
-
-Edit `.env.docker` and replace the dev values.
+First run takes a few minutes. Access the app at `http://localhost:3000`.
 
 ---
 
@@ -152,25 +148,21 @@ bundle exec rails db:migrate
 ### 3. Start services
 
 Terminal 1 — Webpack:
-
 ```bash
 bin/webpack-dev-server
 ```
 
 Terminal 2 — Rails:
-
 ```bash
 rails s
 ```
 
 Terminal 3 — Redis:
-
 ```bash
 redis-server
 ```
 
-Terminal 4 — Sidekiq (for background jobs):
-
+Terminal 4 — Sidekiq:
 ```bash
 bundle exec sidekiq
 ```
@@ -181,52 +173,34 @@ bundle exec sidekiq
 bundle exec rspec
 ```
 
-Auto-run tests on file changes:
-
-```bash
-bundle exec guard -c
-```
-
 ---
 
 ## Troubleshooting
 
-### Docker: Container won't start
+### Container won't start
 
-Check logs for errors:
-
+Check logs:
 ```bash
-docker compose logs web
+docker logs deltabadger
 ```
 
-Common fixes:
-- Make sure Docker Desktop is running
-- Try rebuilding: `docker compose build --no-cache`
-- Reset everything (see "Starting Fresh" above)
+### Port already in use
 
-### Docker: Port already in use
-
-Another app is using port 3000. Either stop that app, or change the port in `.env.docker`:
-
-```bash
-APP_PORT=3001
-```
+Change the port mapping: `-p 3001:3000`
 
 ### macOS: fork() crash (development)
 
-If you see this error when loading exchanges:
-
-```
-objc[86427]: +[__NSCFConstantString initialize] may have been in progress in another thread when fork() was called.
-```
-
 Add to your shell config:
-
 ```bash
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 ```
 
 ---
+
+## Credits
+
+- **Original Project:** [Deltabadger](https://github.com/deltabadger/deltabadger) by the Deltabadger team
+- **AIO Repackage:** This fork
 
 ## License
 
