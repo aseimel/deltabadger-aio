@@ -101,13 +101,15 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-# Install s6-overlay based on architecture
+# Install xz-utils first, then s6-overlay
+RUN apt-get update -qq && apt-get install -y --no-install-recommends curl xz-utils ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp/
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && rm /tmp/s6-overlay-noarch.tar.xz
 
 # Architecture-specific s6-overlay binary
-RUN apt-get update -qq && apt-get install -y --no-install-recommends curl xz-utils ca-certificates && \
-    if [ "$TARGETARCH" = "arm64" ]; then \
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
         curl -L -o /tmp/s6-overlay-arch.tar.xz https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-aarch64.tar.xz; \
     else \
         curl -L -o /tmp/s6-overlay-arch.tar.xz https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz; \
