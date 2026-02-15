@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Container-Level Autonomy Rule (CRITICAL)
+
+ALL changes MUST work automatically via a Docker container update. The user must NEVER need to run manual commands inside the container (`docker exec`, `rails console`, etc.). Specifically:
+
+- **New data** (e.g., exchange records): Use raw SQL migrations, NOT seeds. Seeds only run on first startup; migrations run on every update.
+- **Data migrations**: Always use raw SQL (`execute <<-SQL`), never ActiveRecord models, to avoid class-loading issues during container initialization.
+- **Configuration changes**: Must be handled by migrations or init scripts, never require manual intervention.
+- **The update flow is**: push to `claude/*` branch → auto-merge to main → Docker build → user pulls `:latest` → container restarts and everything works.
+
 ## Backward Compatibility Rules (MOST IMPORTANT)
 
 ### Zero-Downtime Docker Update Requirements
