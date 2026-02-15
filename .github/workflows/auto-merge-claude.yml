@@ -5,10 +5,12 @@ on:
     branches: ['claude/**']
 
 jobs:
-  merge:
+  merge-and-build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -27,3 +29,9 @@ jobs:
             exit 1
           }
           git push origin main
+
+      - name: Trigger Docker build
+        run: |
+          gh workflow run build-aio.yml --ref main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
