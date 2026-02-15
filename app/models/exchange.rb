@@ -18,8 +18,12 @@ class Exchange < ApplicationRecord
                                            Exchanges::Kraken
                                            Exchanges::Binance
                                            Exchanges::BinanceUs
+                                           Exchanges::Bitget
+                                           Exchanges::Bybit
+                                           Exchanges::Mexc
+                                           Exchanges::Bitvavo
                                          ])
-                                 } # FIXME: Temporary until all exchanges are supported
+                                 }
 
   include Synchronizer
   include CandleBuilder

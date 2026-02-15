@@ -20,6 +20,8 @@ module ExchangeApi
         when 'kucoin' then kucoin_client(api_key, order_type)
         when 'bitfinex' then bitfinex_client(api_key, order_type)
         when 'bitstamp' then bitstamp_client(api_key, order_type)
+        when 'bitget', 'bybit', 'mexc', 'bitvavo'
+          exchange_model_client(exchange, api_key, order_type)
         end
       end
       # rubocop:enable Metrics/CyclomaticComplexity
@@ -144,6 +146,15 @@ module ExchangeApi
           api_key: api_key.key,
           api_secret: api_key.secret
         )
+      end
+
+      def exchange_model_client(exchange, api_key, order_type)
+        client = if limit_trader?(order_type)
+                   ExchangeApi::Traders::ExchangeModel::LimitTrader
+                 else
+                   ExchangeApi::Traders::ExchangeModel::MarketTrader
+                 end
+        client.new(exchange: exchange, api_key: api_key)
       end
 
       def market_trader?(order_type)

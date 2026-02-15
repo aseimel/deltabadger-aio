@@ -28,6 +28,18 @@ bitfinex.update!(maker_fee: '0.0', taker_fee: '0.0', withdrawal_fee: '0.0004')
 bitstamp = Exchanges::Bitstamp.find_or_create_by!(name: 'Bitstamp')
 bitstamp.update!(maker_fee: '0.3', taker_fee: '0.4', withdrawal_fee: '0.0005')
 
+bitget = Exchanges::Bitget.find_or_create_by!(name: 'Bitget')
+bitget.update!(maker_fee: '0.1', taker_fee: '0.1', withdrawal_fee: '0.0004')
+
+bybit = Exchanges::Bybit.find_or_create_by!(name: 'Bybit')
+bybit.update!(maker_fee: '0.1', taker_fee: '0.1', withdrawal_fee: '0.0002')
+
+mexc = Exchanges::Mexc.find_or_create_by!(name: 'MEXC')
+mexc.update!(maker_fee: '0.0', taker_fee: '0.05', withdrawal_fee: '0.0005')
+
+bitvavo = Exchanges::Bitvavo.find_or_create_by!(name: 'Bitvavo')
+bitvavo.update!(maker_fee: '0.15', taker_fee: '0.25', withdrawal_fee: '0.0')
+
 # User.find_or_create_by(email: "test@test.com") do |user|
 #   user.name = "Satoshi"
 #   user.password = "Polo@polo1"
