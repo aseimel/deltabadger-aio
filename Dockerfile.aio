@@ -2,6 +2,7 @@
 # Deltabadger AIO - All-in-One Docker Image
 # Includes: PostgreSQL 15, Redis 7, Rails (Puma), Sidekiq
 # Usage: docker run -d -p 3000:3000 -v deltabadger-data:/data ghcr.io/aseimel/deltabadger-aio
+# Build: 2026-02-15-rebuild
 
 # ============================================================================
 # Stage 1: Build frontend assets (same as original)
