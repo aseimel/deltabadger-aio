@@ -64,7 +64,8 @@ module Bot::Schedulable
     return legacy_next_interval_checkpoint_at if legacy?
     return Time.current if effective_interval_duration.zero?
 
-    checkpoint = started_at || Time.current
+    # Use raw started_at from DB, not decorated version (e.g. from PriceLimitable)
+    checkpoint = read_attribute(:started_at) || Time.current
     if effective_interval_duration == 1.month
       # handle the month interval independently so Rails can target the next same day of the month
       loop do

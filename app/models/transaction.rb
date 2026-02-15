@@ -82,10 +82,15 @@ class Transaction < ApplicationRecord
 
   def cancel
     result = bot.cancel_order(order_id: external_id)
-    Bot::FetchAndUpdateOrderJob.perform_later(self, update_missed_quote_amount: true)
-    return result if result.failure?
 
-    Result::Success.new(self)
+    # Always fetch updated order status, even if cancel request failed
+    begin
+      Bot::FetchAndUpdateOrderJob.perform_later(self, update_missed_quote_amount: true)
+    rescue => e
+      Rails.logger.error("Failed to schedule FetchAndUpdateOrderJob for transaction #{id}: #{e.message}")
+    end
+
+    result
   end
 
   private

@@ -158,7 +158,16 @@ module Exchange::Synchronizer
       Rails.logger.warn "[Sync] Skipping ticker #{base}/#{quote}: #{e.message}"
     end
 
-    tickers.where(ticker: current_tickers - updated_tickers).update_all(available: false)
+    stale_tickers = current_tickers - updated_tickers
+    # Guard: don't wipe all tickers if API returned empty/partial data
+    if updated_tickers.any? && stale_tickers.size < current_tickers.size
+      tickers.where(ticker: stale_tickers).update_all(available: false)
+    elsif updated_tickers.empty? && current_tickers.any?
+      Rails.logger.warn("[Sync] Skipping ticker cleanup for #{name}: API returned no tickers")
+    else
+      tickers.where(ticker: stale_tickers).update_all(available: false)
+    end
+
     current_exchange_asset_ids = exchange_assets.available.pluck(:asset_id)
     updated_exchange_asset_ids = tickers.available.pluck(:base_asset_id, :quote_asset_id).flatten.uniq
     exchange_assets.where(asset_id: current_exchange_asset_ids - updated_exchange_asset_ids).update_all(available: false)

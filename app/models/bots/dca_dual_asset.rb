@@ -62,6 +62,9 @@ class Bots::DcaDualAsset < Bot
       self.missed_quote_amount = nil
     end
 
+    # Skip immediate status bar broadcast if deferred job will handle it
+    @skip_status_bar_broadcast = !set_orders_now
+
     if valid?(:start) && save
       if set_orders_now
         Bot::ActionJob.perform_later(self)
@@ -73,6 +76,8 @@ class Bots::DcaDualAsset < Bot
     else
       false
     end
+  ensure
+    @skip_status_bar_broadcast = false
   end
 
   def stop(stop_message_key: nil)

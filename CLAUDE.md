@@ -2,6 +2,79 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Backward Compatibility Rules (MOST IMPORTANT)
+
+### Zero-Downtime Docker Update Requirements
+
+ALL code changes MUST preserve:
+
+1. **Database Schema Compatibility**
+   - Existing tables: `bots`, `transactions`, `daily_transaction_aggregates`, `api_keys`, etc.
+   - Encrypted columns using `attr_encrypted` (key/secret/passphrase with _iv columns)
+   - JSONB columns: `settings`, `transient_data`, `error_messages`
+   - Foreign key constraints and indexes
+   - Enum values and ordering
+
+2. **Data Structure Integrity**
+   - Bot STI types: `Bots::DcaSingleAsset`, `Bots::DcaDualAsset`, `Bots::Withdrawal`
+   - Transaction status enum: `:submitted`, `:failed`, `:skipped`
+   - API key types: `:trading`, `:withdrawal`
+   - All existing bot settings must remain readable
+
+3. **Infrastructure Stability**
+   - PostgreSQL queries (use JSONB operators: `->`, `->>`, `@>`, `?`)
+   - Sidekiq job scheduling (ActiveJob abstraction)
+   - attr_encrypted for sensitive data (never Rails 8 native encryption)
+   - Webpacker asset pipeline
+   - s6-overlay process management
+
+4. **API Compatibility**
+   - Sidekiq::ScheduledSet, Sidekiq::Queue, Sidekiq::RetrySet
+   - Transaction#cancel must continue working
+   - Bot#start, Bot#stop, Bot#destroy must continue working
+   - All exchange API integrations must continue working
+
+### Upstream Integration Rules
+
+This fork diverges from upstream deltabadger v1.6.x on infrastructure:
+
+**NEVER Port (Incompatible)**:
+- SQLite migrations (we use PostgreSQL)
+- SolidQueue job system (we use Sidekiq + Redis)
+- Rails 8 features (we're on Rails 6.0.6.1)
+- Native ActiveRecord encryption (we use attr_encrypted)
+- Removal of withdrawal bot type (we keep it)
+- Removal of daily_transaction_aggregates table (we keep it)
+- 2-layer exchange pattern (we keep 3-layer)
+- jsbundling/esbuild configs (we use Webpacker)
+
+**Safe to Port (After Adaptation)**:
+- Bug fixes in exchange models (order parsing, error handling)
+- UI improvements (SASS, CSS, JavaScript)
+- Stimulus controller improvements
+- Turbo stream optimizations
+- New exchange implementations (adapt to 3-layer pattern)
+
+**Requires PostgreSQL Adaptation**:
+```ruby
+# SQLite (upstream):
+where("json_extract(settings, '$.key') = ?", value)
+
+# PostgreSQL (our fork):
+where("settings->>'key' = ?", value)
+where("settings @> ?", { key: value }.to_json)
+```
+
+**Requires Sidekiq Adaptation**:
+```ruby
+# SolidQueue (upstream):
+cancel_solid_queue_jobs(job_class: JobClass, record: self)
+
+# Sidekiq (our fork):
+Sidekiq::ScheduledSet.new.each { |job| job.delete if matches }
+Sidekiq::Queue.new(queue_name).each { |job| job.delete if matches }
+```
+
 ## Project Overview
 
 Deltabadger is a self-hosted Dollar Cost Averaging (DCA) bot for cryptocurrency. It automates recurring purchases across multiple exchanges (Binance, Coinbase, Kraken, Bitstamp, Gemini, KuCoin, etc.). Built with Rails 6 + React/Redux frontend.

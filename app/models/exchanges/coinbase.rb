@@ -495,7 +495,10 @@ class Exchanges::Coinbase < Exchange
       :unknown
     when 'OPEN'
       :open
-    when 'FILLED', 'CANCELLED', 'EXPIRED'
+    when 'FILLED'
+      :closed
+    when 'CANCELLED', 'EXPIRED'
+      Rails.logger.info("Order cancelled/expired on #{name}: #{status}")
       :closed
     when 'FAILED'
       :failed # Warning! This is not a valid external_status.
