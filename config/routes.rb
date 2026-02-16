@@ -54,82 +54,74 @@ Rails.application.routes.draw do
     end
   end
 
-  scope "(:locale)", locale: /#{I18n.available_locales.join("|")}/ do
-    root to: 'home#index'
+  root to: 'home#index'
 
-    devise_for :users, controllers: { sessions: 'users/sessions', passwords: 'users/passwords', confirmations: 'users/confirmations', registrations: 'users/registrations' }, path: '', path_names: { sign_in: 'login', sign_out: 'logout', sign_up: 'signup' }, skip: [:registrations, :omniauth_callbacks]
-    devise_scope :user do
-      get  'signup', to: 'users/registrations#new', as: 'new_user_registration'
-      post 'signup', to: 'users/registrations#create', as: 'user_registration'
-      get 'verify_two_factor', to: 'users/sessions#verify_two_factor'
-      post 'verify_two_factor', to: 'users/sessions#verify_two_factor'
+  devise_for :users, controllers: { sessions: 'users/sessions', passwords: 'users/passwords', confirmations: 'users/confirmations', registrations: 'users/registrations' }, path: '', path_names: { sign_in: 'login', sign_out: 'logout', sign_up: 'signup' }, skip: [:registrations, :omniauth_callbacks]
+  devise_scope :user do
+    get  'signup', to: 'users/registrations#new', as: 'new_user_registration'
+    post 'signup', to: 'users/registrations#create', as: 'user_registration'
+    get 'verify_two_factor', to: 'users/sessions#verify_two_factor'
+    post 'verify_two_factor', to: 'users/sessions#verify_two_factor'
+  end
+
+  namespace :settings do
+    get '/', action: :index
+    patch :update_password
+    patch :update_email
+    patch :update_name
+    patch :update_time_zone
+    get :edit_two_fa
+    patch :update_two_fa
+    get 'confirm_destroy_api_key/:id', action: :confirm_destroy_api_key, as: :confirm_destroy_api_key
+    delete 'destroy_api_key/:id', action: :destroy_api_key, as: :destroy_api_key
+  end
+
+  get :dashboard, to: redirect('/bots')
+
+  namespace :bots do
+    resources :dca_single_assets, only: [:create]
+    namespace :dca_single_assets do
+      resource :pick_buyable_asset, only: [:new, :create]
+      resource :pick_exchange, only: [:new, :create]
+      resource :add_api_key, only: [:new, :create]
+      resource :pick_spendable_asset, only: [:new, :create]
+      resource :confirm_settings, only: [:new, :create]
     end
-
-    namespace :settings do
-      get '/', action: :index
-      patch :update_password
-      patch :update_email
-      patch :update_name
-      patch :update_time_zone
-      get :edit_two_fa
-      patch :update_two_fa
-      get 'confirm_destroy_api_key/:id', action: :confirm_destroy_api_key, as: :confirm_destroy_api_key
-      delete 'destroy_api_key/:id', action: :destroy_api_key, as: :destroy_api_key
-    end
-
-    get :dashboard, to: redirect { |params, request|
-      "/#{request.params[:locale] || I18n.default_locale}/bots"
-    }
-
-    namespace :bots do
-      resources :dca_single_assets, only: [:create]
-      namespace :dca_single_assets do
-        resource :pick_buyable_asset, only: [:new, :create]
-        resource :pick_exchange, only: [:new, :create]
-        resource :add_api_key, only: [:new, :create]
-        resource :pick_spendable_asset, only: [:new, :create]
-        resource :confirm_settings, only: [:new, :create]
-      end
-      resources :dca_dual_assets, only: [:create]
-      namespace :dca_dual_assets do
-        resource :pick_first_buyable_asset, only: [:new, :create]
-        resource :pick_second_buyable_asset, only: [:new, :create]
-        resource :pick_exchange, only: [:new, :create]
-        resource :add_api_key, only: [:new, :create]
-        resource :pick_spendable_asset, only: [:new, :create]
-        resource :confirm_settings, only: [:new, :create]
-      end
-    end
-
-    resources :bots do
-      resource :start, only: [:edit, :update], controller: 'bots/starts'
-      resource :stop, only: [:update], controller: 'bots/stops'
-      resource :delete, only: [:edit, :destroy], controller: 'bots/deletes'
-      resource :add_api_key, only: [:new, :create], controller: 'bots/add_api_keys'
-      resource :asset_search, only: [:edit], controller: 'bots/asset_searches'
-      resource :export, only: [:create], controller: 'bots/exports'
-      resources :transactions, only: [:destroy], controller: 'bots/cancel_orders'
-      post :show
-      get :show_index_bot, on: :collection # TODO: move to custom :show logic according to bot type
-    end
-
-    namespace :broadcasts do
-      post :metrics_update
-      post :pnl_update
-      post :price_limit_info_update
-      post :price_drop_limit_info_update
-      post :indicator_limit_info_update
-      post :moving_average_limit_info_update
-      post :fetch_open_orders
+    resources :dca_dual_assets, only: [:create]
+    namespace :dca_dual_assets do
+      resource :pick_first_buyable_asset, only: [:new, :create]
+      resource :pick_second_buyable_asset, only: [:new, :create]
+      resource :pick_exchange, only: [:new, :create]
+      resource :add_api_key, only: [:new, :create]
+      resource :pick_spendable_asset, only: [:new, :create]
+      resource :confirm_settings, only: [:new, :create]
     end
   end
 
-  get '/cryptocurrency-dollar-cost-averaging', to: redirect("/#{I18n.default_locale}/cryptocurrency-dollar-cost-averaging")
-  get '/', to: redirect("/#{I18n.default_locale}")
+  resources :bots do
+    resource :start, only: [:edit, :update], controller: 'bots/starts'
+    resource :stop, only: [:update], controller: 'bots/stops'
+    resource :delete, only: [:edit, :destroy], controller: 'bots/deletes'
+    resource :add_api_key, only: [:new, :create], controller: 'bots/add_api_keys'
+    resource :asset_search, only: [:edit], controller: 'bots/asset_searches'
+    resource :export, only: [:create], controller: 'bots/exports'
+    resources :transactions, only: [:destroy], controller: 'bots/cancel_orders'
+    post :show
+    get :show_index_bot, on: :collection # TODO: move to custom :show logic according to bot type
+  end
+
+  namespace :broadcasts do
+    post :metrics_update
+    post :pnl_update
+    post :price_limit_info_update
+    post :price_drop_limit_info_update
+    post :indicator_limit_info_update
+    post :moving_average_limit_info_update
+    post :fetch_open_orders
+  end
 
   get '/thank-you', to: 'home#confirm_registration', as: :confirm_registration
   get '/sitemap', to: 'sitemap#index', defaults: {format: 'xml'}
   get '/health-check', to: 'health_check#index', as: :health_check
 
-  # get '*path', to: redirect("/#{I18n.default_locale}")
 end

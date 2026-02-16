@@ -91,15 +91,12 @@ const DashboardTemplate = ({
   const handleFinishCreating = (id = null) => {
     if (id) {
       // startBot(id);
-      // const url = `/${I18n.locale}/bots/${id}`;
-      // window.location.href = url;
-
       loadBots(id)
         .then(() => startBot(id))
-        .then(() => window.location.href = `/${I18n.locale}/bots/${id}`);
+        .then(() => window.location.href = `/bots/${id}`);
 
     } else {
-      window.location.href = `/${I18n.locale}/bots`;
+      window.location.href = `/bots`;
     }
   };
 

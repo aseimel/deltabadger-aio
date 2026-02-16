@@ -12,10 +12,6 @@ class ApplicationController < ActionController::Base
     redirect_back fallback_location: root_path
   end
 
-  def default_url_options
-    {}
-  end
-
   def set_no_cache
     response.headers['Cache-Control'] = 'no-store'
   end
