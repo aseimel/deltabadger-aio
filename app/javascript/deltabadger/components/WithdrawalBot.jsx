@@ -10,6 +10,7 @@ import {shouldRename, renameSymbol} from "../utils/symbols";
 import { RawHTML } from './RawHtml'
 import { AddApiKey } from "./BotForm/AddApiKey";
 import { removeInvalidApiKeys, splitTranslation } from "./helpers";
+import { Spinner } from './Spinner';
 
 import {
   reloadBot,
@@ -57,7 +58,7 @@ const BotTemplate = ({
   const [interval, setInterval] = useState(settings.interval);
   const [intervalEnabled, setIntervalEnabled] = useState(settings.interval_enabled);
   const [minimum, setMinimum] = useState("0")
-  const [apiKeyExists, setApiKeyExists] = useState(true);
+  const [apiKeyExists, setApiKeyExists] = useState(null);
   const [apiKeysState, setApiKeysState] = useState(apiKeyStatus["ADD"]);
 
   const isStarting = startingBotIds.includes(id);
@@ -99,8 +100,9 @@ const BotTemplate = ({
   const keyInvalid = (status) => status === 'incorrect'
 
   const keyExists = () => {
-    // we have to assume that the key exists to fix unnecessary form rendering
-    const exchange = exchanges.find(e => exchangeId === e.id) || {trading_key_status: true, withdrawal_key_status: true}
+    if (exchanges.length === 0) return; // Don't set state until exchanges are loaded
+    const exchange = exchanges.find(e => exchangeId === e.id)
+    if (!exchange) return;
     const keyStatus = exchange.withdrawal_key_status
     setApiKeyExists(keyOwned(keyStatus))
 
@@ -143,6 +145,16 @@ const BotTemplate = ({
     return exchangeName === 'kraken' ?
       I18n.t('bot.minimum_withdrawal_disclaimer', {currency: currencyName, minimum: minimum}) :
       I18n.t('bot.minimum_withdrawal_disclaimer_usd', {minimum: minimum, exchange: exchangeName})
+  }
+
+  if (apiKeyExists === null && !tileMode) {
+    return (
+      <div className="db-bots__item db-bot db-bot--withdrawal">
+        <div className="db-spinner-positioner">
+          <Spinner />
+        </div>
+      </div>
+    );
   }
 
   if (tileMode) {

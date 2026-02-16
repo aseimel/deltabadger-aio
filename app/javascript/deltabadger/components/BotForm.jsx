@@ -7,7 +7,6 @@ import { AddApiKey } from './BotForm/AddApiKey';
 import { Details } from './BotForm/Details';
 import { removeInvalidApiKeys } from "./helpers";
 import { ConfigureWithdrawalBot } from "./BotForm/ConfigureWithdrawalBot";
-import { PickBotType } from "./BotForm/PickBotType";
 
 const STEPS = [
   'closed_form',
@@ -43,11 +42,7 @@ export const BotForm = ({
   const [form, setFormState] = useState({});
   const [errors, setErrors] = useState("");
 
-  // start with closed form
-  const [type, setType] = useState(TYPES[0])
-
-  // start with selected withdrawal bot
-  // const [type, setType] = useState(TYPES[1])
+  const [type, setType] = useState('withdrawal')
 
   const [isCreatingBot, setCreatingBot] = useState(false);
 
@@ -106,7 +101,8 @@ export const BotForm = ({
     }
     if ((STEPS[step] == 'validating_api_key') && invalidExchangesIds.includes(form.exchangeId)) { return 5 }
 
-    if ((STEPS[step] == 'closed_form') && open) { return step + 1 }
+    if ((STEPS[step] == 'closed_form') && open) { return 2 } // skip pick_bot_type, go to pick_exchange
+    if (STEPS[step] == 'pick_bot_type') { return 2 } // skip pick_bot_type
 
     if ((STEPS[step] == 'validating_api_key') && !keyExists(form.exchangeId)) {
       return 5
@@ -126,11 +122,6 @@ export const BotForm = ({
       setFormState({})
     }
   }, [currentBot])
-
-  const pickBotTypeHandler = (type) => {
-    setType(type)
-    setStep(2)
-  }
 
   const pickExchangeHandler = (id, name) => {
     setFormState({...form, exchangeId: id})
@@ -232,14 +223,6 @@ export const BotForm = ({
 
   const renderForm = () => {
     switch (STEPS[chooseStep(step)]) {
-      case 'pick_bot_type':
-        return <PickBotType
-          handleReset={() => {
-            setStep(0)
-            callbackAfterClosing()
-          }}
-          handleSubmit={pickBotTypeHandler}
-          />
       case 'pick_exchange':
         return <PickExchange
           handleReset={() => {
@@ -254,7 +237,7 @@ export const BotForm = ({
         clearTimeout(apiKeyTimeout)
         return <AddApiKey
           pickedExchangeName={pickedExchange.name}
-          handleReset={resetFormToStep(1)}
+          handleReset={resetFormToStep(2)}
           handleSubmit={addApiKeyHandler}
           handleRemove={() => removeInvalidApiKeys(form.exchangeId)}
           status={'add_api_key'}
@@ -264,7 +247,7 @@ export const BotForm = ({
       case 'validating_api_key':
         return <AddApiKey
           pickedExchangeName={pickedExchange.name}
-          handleReset={resetFormToStep(1)}
+          handleReset={resetFormToStep(2)}
           handleSubmit={addApiKeyHandler}
           handleRemove={() => removeInvalidApiKeys(form.exchangeId)}
           status={'validating_api_key'}
@@ -275,7 +258,7 @@ export const BotForm = ({
         clearTimeout(apiKeyTimeout)
         return <AddApiKey
           pickedExchangeName={pickedExchange.name}
-          handleReset={resetFormToStep(1)}
+          handleReset={resetFormToStep(2)}
           handleSubmit={addApiKeyHandler}
           handleRemove={() => removeInvalidApiKeys(form.exchangeId)}
           status={'invalid_api_key'}
@@ -286,7 +269,7 @@ export const BotForm = ({
         return <ConfigureTradingBot
           showLimitOrders={isBasic || isPro || isLegendary}
           currentExchange={pickedExchange}
-          handleReset={resetFormToStep(1)}
+          handleReset={resetFormToStep(2)}
           handleSubmit={configureTradingBotHandler}
           handleSmartIntervalsInfo={getSmartIntervalsInfo}
           setShowInfo={setShowSmartIntervalsInfo}
@@ -296,7 +279,7 @@ export const BotForm = ({
       case 'configure_withdrawal_bot':
         return <ConfigureWithdrawalBot
           currentExchange={pickedExchange}
-          handleReset={resetFormToStep(1)}
+          handleReset={resetFormToStep(2)}
           handleSubmit={configureWithdrawalBotHandler}
           getMinimums={getWithdrawalMinimums}
           disable={isCreatingBot}

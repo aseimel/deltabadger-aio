@@ -6,8 +6,9 @@ class MakeWithdrawalWorker
     bot = Bot.find(bot_id)
     bot.broadcast_status_bar_update
   rescue StandardError => e
-    # prevent job from retrying
-    bot = Bot.find(bot_id)
-    bot.broadcast_status_bar_update
+    Rails.logger.error("[MakeWithdrawalWorker] Bot #{bot_id}: #{e.class} - #{e.message}")
+    Rails.logger.error(e.backtrace&.first(5)&.join("\n"))
+    bot = Bot.find(bot_id) rescue nil
+    bot&.broadcast_status_bar_update
   end
 end

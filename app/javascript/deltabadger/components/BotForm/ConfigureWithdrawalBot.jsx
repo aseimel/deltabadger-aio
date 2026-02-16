@@ -55,12 +55,8 @@ export const ConfigureWithdrawalBot = ({ currentExchange, handleReset, handleSub
     }
   };
 
-  const exchangeWithoutAddressEndpoint = () => {
-    return currentExchange.name.toLowerCase() === 'kraken'
-  }
-
   const existsAddress = () => {
-    return !exchangeWithoutAddressEndpoint() && address !== ''
+    return address !== ''
   };
 
   const filterAddressesForCurrency = () => {
@@ -74,9 +70,6 @@ export const ConfigureWithdrawalBot = ({ currentExchange, handleReset, handleSub
     async function fetchMinimums () {
       const minimums = await getMinimums(currentExchange.id, currency)
       setMinimum(minimums.minimum.toString())
-      if (currentExchange.name === 'Kraken'){
-        setThreshold(minimums.minimum.toString())
-      }
     }
 
     fetchMinimums()
@@ -116,9 +109,7 @@ export const ConfigureWithdrawalBot = ({ currentExchange, handleReset, handleSub
   }
 
   const getMinimumDisclaimer = () => {
-    return currentExchange.name === 'kraken' ?
-      I18n.t('bot.minimum_withdrawal_disclaimer', {currency: currencyName, minimum: minimum}) :
-      I18n.t('bot.minimum_withdrawal_disclaimer_usd', {minimum: minimum, exchange: currentExchange.name})
+    return I18n.t('bot.minimum_withdrawal_disclaimer', {currency: currencyName, minimum: minimum})
   }
 
   return (
@@ -169,21 +160,8 @@ export const ConfigureWithdrawalBot = ({ currentExchange, handleReset, handleSub
                 <div>{splitTranslation(I18n.t('bot.setup.withdrawal_html', {currency: currencyName, address: address}))[2]}</div>
               </>
             }
-            { (!existsAddress() && !exchangeWithoutAddressEndpoint()) &&
+            { !existsAddress() &&
               <div>{I18n.t('bot.setup.no_wallet_found', {exchangeName: currentExchange.name})}</div>
-            }
-            { currentExchange.name.toLowerCase() === 'kraken' &&
-              <>
-                <div>{splitTranslation(I18n.t('bot.setup.withdrawal_html', {currency: currencyName, address: address}))[1]}</div>
-                  <input
-                    type="text"
-                    size={(address.length > 0) ? address.length : 3 }
-                    value={address}
-                    onChange={e => setAddress(e.target.value)}
-                    className="bot-input bot-input--sizable bot-input--paper-bg"
-                  />
-                <div>{splitTranslation(I18n.t('bot.setup.withdrawal_html', {currency: currencyName, address: address}))[2]}</div>
-              </>
             }
           </div>
 

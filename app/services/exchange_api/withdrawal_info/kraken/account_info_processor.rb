@@ -35,22 +35,25 @@ module ExchangeApi
         end
 
         def available_wallets
-          # Kraken does not support retrieving information about crypto addresses
-          Result::Success.new(nil)
+          response = @client.withdraw_addresses
+          return error_to_failure(response.fetch('error')) if response.fetch('error').any?
+
+          addresses = response.fetch('result').map do |addr|
+            { currency: addr['asset'], address: addr['key'] }
+          end
+          Result::Success.new(addresses)
+        rescue StandardError => e
+          Result::Failure.new('Could not fetch withdrawal addresses from Kraken')
         end
 
         def available_funds(bot)
-          Rails.logger.info "withdrawal available_funds bot.currency: #{bot.currency}" # TODO: delete after testing
           minimum = withdrawal_minimum(bot.currency)
-          Rails.logger.info "withdrawal available_funds minimum: #{minimum.inspect}" # TODO: delete after testing
           return minimum unless minimum.success?
 
           response = @client.withdraw_info(asset: bot.currency, key: bot.address, amount: minimum.data)
-          Rails.logger.info "withdrawal available_funds response: #{response.inspect}" # TODO: delete after testing
           return error_to_failure(response.fetch('error')) if response.fetch('error').any?
 
           data = response.fetch('result').fetch('limit').to_f
-          Rails.logger.info "withdrawal available_funds data: #{data.inspect}" # TODO: delete after testing
           Result::Success.new(data)
         rescue StandardError => e
           Result::Failure.new('Could not fetch funds from Kraken', RECOVERABLE.to_s)
@@ -63,7 +66,6 @@ module ExchangeApi
           # @client.withdraw_methods can filter by asset and network, and give the minimum
           # For this reason, we use the most restrictive minimum for a given asset, regardless of network
           response = @client.withdraw_methods(asset: currency)
-          Rails.logger.info "withdrawal fetch_minimum_withdrawal_amount withdraw_methods response: #{response.inspect}" # TODO: delete after testing
           return error_to_failure(response.fetch('error')) if response.fetch('error').any?
 
           data = response.fetch('result').map { |method| method.fetch('minimum').to_f }.max

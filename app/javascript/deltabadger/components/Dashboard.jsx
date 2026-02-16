@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import I18n from 'i18n-js'
 import { BotForm } from './BotForm'
 import { BotDetails } from './BotDetails'
-import { TradingBot } from './TradingBot'
 import {
   startBot,
   loadBots,
@@ -45,7 +44,7 @@ const DashboardTemplate = ({
   }
 
   useEffect(() => {
-    fetchExchanges('trading')
+    fetchExchanges('withdrawal')
   }, [])
 
   useEffect(() => {
@@ -115,8 +114,7 @@ const DashboardTemplate = ({
       );
     }
 
-    const BotComponent = selectedBot.bot_type === 'trading' ? TradingBot :
-                        selectedBot.bot_type === 'withdrawal' ? WithdrawalBot : null;
+    const BotComponent = WithdrawalBot;
 
     return (
       <>

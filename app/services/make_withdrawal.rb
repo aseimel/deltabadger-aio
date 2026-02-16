@@ -32,16 +32,12 @@ class MakeWithdrawal < BaseService
       @schedule_withdrawal.call(bot)
     else
       Transaction.create!(failed_transaction_params(result, bot))
-      Rails.logger.info '=======================  make_withdrawal ELSE =============================='
-      Rails.logger.info "================= #{result.errors.inspect} ======================="
-      Rails.logger.info '====================================================='
+      Rails.logger.error("[MakeWithdrawal] Bot #{bot.id} withdrawal failed: #{result.errors.inspect}")
       @order_flow_helper.stop_bot(bot, true, result.errors)
     end
     result
   rescue StandardError => e
-    Rails.logger.info '=======================  make_withdrawal RESCUE 2 =============================='
-    Rails.logger.info "================= #{e.inspect} ======================="
-    Rails.logger.info '====================================================='
+    Rails.logger.error("[MakeWithdrawal] Bot #{bot_id} exception: #{e.class} - #{e.message}")
     if bot.present?
       @unschedule_transactions.call(bot)
       @order_flow_helper.stop_bot(bot, true)
@@ -57,15 +53,11 @@ class MakeWithdrawal < BaseService
     account_info_api = @get_withdrawal_info_processor.call(api_key)
     withdrawal_api = @get_withdrawal_processor.call(api_key)
     balance = account_info_api.available_funds(bot)
-    Rails.logger.info "withdrawal balance: #{balance.inspect}" # TODO: delete after testing
     return balance unless balance.success?
 
     bot.update(account_balance: balance.data)
-    Rails.logger.info "withdrawal bot: #{bot.inspect}" # TODO: delete after testing
-    Rails.logger.info "withdrawal threshold : #{check_balance_threshold(bot, balance).inspect}" # TODO: delete after testing
     return Result::Failure.new(SKIPPED.to_s) unless check_balance_threshold(bot, balance)
 
-    Rails.logger.info "withdrawal params: #{get_withdrawal_params(bot, balance).inspect}" # TODO: delete after testing
     withdrawal_api.make_withdrawal(get_withdrawal_params(bot, balance))
   end
 
@@ -78,12 +70,6 @@ class MakeWithdrawal < BaseService
   end
 
   def get_withdrawal_params(bot, balance)
-    params = {
-      amount: balance.data,
-      address: bot.address,
-      currency: bot.currency
-    } # TODO: delete after testing
-    Rails.logger.info "withdrawal params: #{params.inspect}" # TODO: delete after testing
     {
       amount: balance.data,
       address: bot.address,

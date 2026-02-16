@@ -12,18 +12,14 @@ class StartBot < BaseService
     return Result::Success.new(bot) if bot.scheduled?
 
     start_params = {
-      status: bot.basic? ? 'executing' : 'scheduled',
+      status: 'scheduled',
       restarts: 0,
       delay: 0,
       current_delay: 0
     }
     bot.update(start_params)
 
-    if bot.basic?
-      @schedule_transaction.call(bot, first_transaction: true, continue_params:)
-    elsif bot.withdrawal?
-      @schedule_withdrawal.call(bot, first_transaction: true)
-    end
+    @schedule_withdrawal.call(bot, first_transaction: true) if bot.withdrawal?
 
     Result::Success.new(bot)
   end

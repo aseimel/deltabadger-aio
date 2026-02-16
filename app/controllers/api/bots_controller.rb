@@ -7,7 +7,7 @@ module Api
       bots = current_user
              .bots
              .not_deleted
-             .legacy
+             .withdrawal
              .includes(:exchange)
              .includes(:daily_transaction_aggregates)
              .includes(:transactions)
