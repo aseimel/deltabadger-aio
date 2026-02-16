@@ -1,35 +1,43 @@
 <%= turbo_stream_from "user_#{current_user.id}", :bot_updates %>
 
 <%= turbo_frame_tag "bot" do %>
-  <%= tag.div data: @loading ? { controller: "broadcast--on-connect",
-                                 broadcast__on_connect_method_value: "metrics_update",
-                                 broadcast__on_connect_method_args_value: { bot_id: @bot.id }.to_json } : {} %>
+  <% if @bot.dca? %>
+    <%= tag.div data: @loading ? { controller: "broadcast--on-connect",
+                                   broadcast__on_connect_method_value: "metrics_update",
+                                   broadcast__on_connect_method_args_value: { bot_id: @bot.id }.to_json } : {} %>
+  <% end %>
   <div class="page-head">
     <%= render "bots/header", bot: @bot, other_bots: @other_bots %>
   </div>
   <div class="flex-column gap-1">
     <div class="bot-control">
-      <%= render partial: "bots/exchange_select", locals: { bot: @bot } %>
+      <% if @bot.dca? %>
+        <%= render partial: "bots/exchange_select", locals: { bot: @bot } %>
+      <% end %>
       <%= render partial: "bots/status/status_bar", locals: { bot: @bot } %>
       <%= render partial: "bots/status/status_button", locals: { bot: @bot } %>
     </div>
-    <div class="columns">
-      <div class="column gap-1">
-        <% if @bot.dca_single_asset? %>
-          <%= render partial: "bots/dca_single_assets/settings", locals: { bot: @bot } %>
-        <% elsif @bot.dca_dual_asset? %>
-          <%= render partial: "bots/dca_dual_assets/settings", locals: { bot: @bot } %>
-        <% end %>
+    <% if @bot.dca? %>
+      <div class="columns">
+        <div class="column gap-1">
+          <% if @bot.dca_single_asset? %>
+            <%= render partial: "bots/dca_single_assets/settings", locals: { bot: @bot } %>
+          <% elsif @bot.dca_dual_asset? %>
+            <%= render partial: "bots/dca_dual_assets/settings", locals: { bot: @bot } %>
+          <% end %>
+        </div>
+        <div class="column gap-1">
+          <%= render partial: "bots/chart", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
+          <% if @bot.dca_single_asset? %>
+            <%= render partial: "bots/dca_single_assets/metrics", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
+          <% elsif @bot.dca_dual_asset? %>
+            <%= render partial: "bots/dca_dual_assets/metrics", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
+          <% end %>
+          <%= render partial: "bots/orders/orders", locals: { bot: @bot, decimals: @decimals } %>
+        </div>
       </div>
-      <div class="column gap-1">
-        <%= render partial: "bots/chart", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
-        <% if @bot.dca_single_asset? %>
-          <%= render partial: "bots/dca_single_assets/metrics", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
-        <% elsif @bot.dca_dual_asset? %>
-          <%= render partial: "bots/dca_dual_assets/metrics", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
-        <% end %>
-        <%= render partial: "bots/orders/orders", locals: { bot: @bot, decimals: @decimals } %>
-      </div>
-    </div>
+    <% elsif @bot.withdrawal? %>
+      <%= render partial: "bots/withdrawals/transactions", locals: { bot: @bot } %>
+    <% end %>
   </div>
 <% end %>

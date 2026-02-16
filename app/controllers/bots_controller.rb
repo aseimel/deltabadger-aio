@@ -42,18 +42,23 @@ class BotsController < ApplicationController
   def show
     if request.format.turbo_stream?
       @pagy, @orders = pagy_countless(@bot.transactions.order(created_at: :desc), items: 10)
-      permitted_params = params.require(:decimals).permit(*Asset.all.pluck(:symbol))
-      @decimals = permitted_params.transform_values(&:to_i)
+      if params[:decimals].present?
+        permitted_params = params.require(:decimals).permit(*Asset.all.pluck(:symbol))
+        @decimals = permitted_params.transform_values(&:to_i)
+      end
     else
       @other_bots = current_user.bots.not_deleted.order(label: :asc).where.not(id: @bot.id).pluck(:id, :label, :type)
 
-      if !@bot.dca?
+      if @bot.basic?
         # TODO: remove this once the legacy dashboard is removed
         respond_to do |format|
           format.html { render 'bots/react_dashboard' }
           format.json { render json: @bot }
         end
+      elsif @bot.withdrawal?
+        # Withdrawal bots: just need status controls + transaction log, no metrics/decimals
       else
+        # DCA bots
         # TODO: When transactions point to real asset ids, we can use the asset ids directly instead of symbols
         if @bot.dca_single_asset?
           @decimals = {

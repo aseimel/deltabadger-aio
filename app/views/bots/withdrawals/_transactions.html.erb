@@ -1,0 +1,20 @@
+<div class="widget widget--table">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col"><%= t('data_labels.date') %></th>
+        <th scope="col"><%= t('data_labels.amount') %></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="orders_list">
+      <% if bot.transactions.none? %>
+        <tr id="orders_list_placeholder">
+          <td colspan="3" class="text-center text-inactive" style="padding-bottom: 2rem;">. . .</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%= turbo_frame_tag 'orders_pagination', src: bot_path(bot, format: :turbo_stream), loading: :lazy %>
+</div>
+<%= render 'bots/orders/export', bot: bot %>

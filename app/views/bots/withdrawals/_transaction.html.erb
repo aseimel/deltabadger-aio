@@ -1,0 +1,33 @@
+<%= tag.tr id: dom_id(order), class: order.skipped? ? 'text-inactive' : order.failed? ? 'text-danger' : '', data: { hw_animate_in_prepend: "animate-order-in" } do %>
+  <td scope="row"><%= order.created_at.in_time_zone(current_user.time_zone).strftime("%Y-%m-%d %I:%M %p") %></td>
+
+  <td><%= order.amount.present? ? order.amount : '-' %> <%= order.bot.currency %></td>
+
+  <td>
+    <% if order.failed? && order.error_messages.present? %>
+      <div class="tooltip-info-icon" data-controller="tooltip" data-action="click->tooltip#toggle">
+        <div class="tooltip-icon--off">
+          <%= render 'svg/24x24_info' %>
+        </div>
+        <div class="tooltip-icon--on">
+          <%= render 'svg/24x24_info-filled' %>
+        </div>
+        <div class="tooltip tooltip--smart-allocation">
+          <%= t('bot.messages.failed_tooltip_explanation', error_message: order.error_messages.to_sentence) %>
+        </div>
+      </div>
+    <% elsif order.skipped? %>
+      <div class="tooltip-info-icon" data-controller="tooltip" data-action="click->tooltip#toggle">
+        <div class="tooltip-icon--off">
+          <%= render 'svg/24x24_info' %>
+        </div>
+        <div class="tooltip-icon--on">
+          <%= render 'svg/24x24_info-filled' %>
+        </div>
+        <div class="tooltip tooltip--smart-allocation">
+          <%= t('bot.messages.skipped_withdrawal_tooltip_explanation') %>
+        </div>
+      </div>
+    <% end %>
+  </td>
+<% end %>

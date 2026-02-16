@@ -1,11 +1,19 @@
 <%= turbo_stream.append 'orders_list' do %>
   <% @orders.each do |order| %>
-    <%= render partial: "bots/orders/order", locals: { order: order, decimals: @decimals, exchange_name: @bot.exchange.name, fetch: order.open? } %>
+    <% if @bot.withdrawal? %>
+      <%= render partial: "bots/withdrawals/transaction", locals: { order: order } %>
+    <% else %>
+      <%= render partial: "bots/orders/order", locals: { order: order, decimals: @decimals, exchange_name: @bot.exchange.name, fetch: order.open? } %>
+    <% end %>
   <% end %>
 <% end %>
 
 <% if @pagy.next.present? %>
   <%= turbo_stream.replace 'orders_pagination' do %>
-    <%= turbo_frame_tag 'orders_pagination', src: bot_path(page: @pagy.next, format: :turbo_stream, params: { decimals: @decimals }), loading: :lazy %>
+    <% if @bot.withdrawal? %>
+      <%= turbo_frame_tag 'orders_pagination', src: bot_path(@bot, page: @pagy.next, format: :turbo_stream), loading: :lazy %>
+    <% else %>
+      <%= turbo_frame_tag 'orders_pagination', src: bot_path(@bot, page: @pagy.next, format: :turbo_stream, params: { decimals: @decimals }), loading: :lazy %>
+    <% end %>
   <% end %>
 <% end %>
