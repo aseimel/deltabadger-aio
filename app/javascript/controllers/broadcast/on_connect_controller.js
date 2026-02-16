@@ -18,7 +18,7 @@ export default class extends Controller {
 
   #triggerBroadcast() {
     // console.log("triggerBroadcast", this.methodValue);
-    fetch(`/${this.#getLocaleFromUrl()}/broadcasts/${this.methodValue}`, {
+    fetch(`/broadcasts/${this.methodValue}`, {
       method: "POST",
       headers: {
         "X-CSRF-Token": document.querySelector('[name="csrf-token"]').content,
@@ -39,17 +39,5 @@ export default class extends Controller {
     );
 
     return turboStreamElements.length > 0;
-  }
-
-  #getLocaleFromUrl(defaultLocale = 'en') {
-    const path = window.location.pathname;
-    const segments = path.split('/').filter(segment => segment);
-
-    const firstSegment = segments[0];
-    if (firstSegment && /^[a-z]{2}$/i.test(firstSegment)) {
-      return firstSegment;
-    }
-
-    return defaultLocale;
   }
 }

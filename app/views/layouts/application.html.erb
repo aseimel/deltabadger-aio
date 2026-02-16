@@ -10,7 +10,6 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= canonical_url_for_static_page if content_for?(:static_page) %>
     <meta name="description" content="<%= content_for?(:meta_description) ? yield(:meta_description) : t('meta.descriptions.default') %>">
 
     <title><%= content_for?(:title) ? yield(:title) : t('meta.title') %></title>
@@ -36,8 +35,7 @@
     </script>
   </head>
 
-  <%# data-locale is only needed for the react dashboard %>
-  <body data-controller="hotwire-animations" data-locale="<%= I18n.locale %>" class="<%= yield(:body_class) %> <%= main_body_classes %>">
+  <body data-controller="hotwire-animations" class="<%= yield(:body_class) %> <%= main_body_classes %>">
     <div id="flash">
       <%= render 'layouts/flash' %>
     </div>

@@ -184,11 +184,6 @@ const API = {
     return client.request({ url, params: {}, method: 'get' }).then(data => data.data)
   },
 
-  getSubscription() {
-    const url = `${API_URL}/subscriptions/check`;
-    return client.request({ url, params: {}, method: 'get' }).then(data => data.data);
-  },
-
   getChartData(botId) {
     const url = `${API_URL}/bots/${botId}/charts/portfolio_value_over_time`;
     return client.request({ url, params: {}, method: 'get' }).then(data => data.data);

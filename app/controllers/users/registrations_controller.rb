@@ -21,7 +21,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
           if resource.errors.empty?
             email = User::Email.real_email(resource.email)
             CustomDeviseMailer.email_already_taken(email).deliver_later
-            redirect_to confirm_registration_url
+            redirect_to new_user_session_url
             return
           end
         end
@@ -45,7 +45,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
   end
 
   def after_inactive_sign_up_path_for(_resource)
-    confirm_registration_url
+    new_user_session_url
   end
 
   private

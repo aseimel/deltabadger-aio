@@ -604,7 +604,6 @@ const BotTemplate = ({
           /> % {isSellOffer() ? I18n.t('bot.above') : (isLegacySell() ? I18n.t('bot.above') :I18n.t('bot.below'))} {I18n.t('bot.price')}.
 
             { isLimitSelected() && <small className="hide-when-running"><LimitOrderNotice/></small> }
-            { !showLimitOrders && <div className="bot input bot-input--pro-plan-only--before"><a href={`/${document.body.dataset.locale}/upgrade`}>Pro</a></div> }
           </div>
         </label>
 
@@ -639,7 +638,6 @@ const BotTemplate = ({
               size={ Math.max(priceRange.high.length, 1) }
             />
             <RawHTML tag="span">{splitTranslation(I18n.t((isLegacySell() || isSellOffer()) ? 'bot.price_range_sell_html' :'bot.price_range_buy_html', {quote: quoteName, base: baseName}))[2]}</RawHTML>
-            { !showLimitOrders && <div className="bot input bot-input--pro-plan-only--before"><a href={`/${document.body.dataset.locale}/upgrade`} >Pro</a></div> }
           </div>
         </label>
       </form>

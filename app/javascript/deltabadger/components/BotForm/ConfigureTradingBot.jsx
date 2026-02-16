@@ -487,7 +487,6 @@ export const ConfigureTradingBot = ({ showLimitOrders, currentExchange, handleRe
                 /> % { isSellOffer() ? I18n.t('bot.above') : I18n.t('bot.below') } {I18n.t('bot.price')}.
 
               { isLimitOrder() && <small><LimitOrderNotice /></small> }
-              { !showLimitOrders && <div className="bot input bot-input--pro-plan-only--before"><a href={`/${document.body.dataset.locale}/upgrade`} >Pro</a></div> }
             </div>
           </label>
 
@@ -522,7 +521,6 @@ export const ConfigureTradingBot = ({ showLimitOrders, currentExchange, handleRe
                 size={ Math.max(priceRange.high.length, 1) }
               />
               <RawHTML tag="span">{splitTranslation(I18n.t(isSellOffer() ? 'bot.price_range_sell_html' :'bot.price_range_buy_html', {quote: quote, base: base}))[2]}</RawHTML>
-              { !showLimitOrders && <div className="bot input bot-input--pro-plan-only--before"><a href={`/${document.body.dataset.locale}/upgrade`} >Pro</a></div> }
             </div>
           </label>
 

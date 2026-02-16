@@ -36,7 +36,6 @@ Rails.application.routes.draw do
   end
 
   namespace :api do
-    get '/subscriptions/check', to: 'subscriptions#check'
     resources :api_keys, only: [:create]
     resources :exchanges, only: [:index]
     get :smart_intervals_info, to: 'bots#smart_intervals_info'
@@ -120,8 +119,6 @@ Rails.application.routes.draw do
     post :fetch_open_orders
   end
 
-  get '/thank-you', to: 'home#confirm_registration', as: :confirm_registration
-  get '/sitemap', to: 'sitemap#index', defaults: {format: 'xml'}
   get '/health-check', to: 'health_check#index', as: :health_check
 
 end
