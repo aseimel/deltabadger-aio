@@ -561,6 +561,7 @@ DEPENDENCIES
   kraken_ruby_client!
   letter_opener
   listen (>= 3.0.5, < 4.0)
+  logger
   lol_dba
   mini_magick (~> 5.2)
   nio4r (= 2.5.9)

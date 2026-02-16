@@ -1,8 +1,6 @@
 module MetaTagsHelper
   def canonical_url_for_static_page
-    return unless I18n.locale != :en
-
-    tag(:link, rel: 'canonical', href: url_for(locale: :en, only_path: false))
+    nil
   end
 
   def meta_description_for_static_page(page_key)

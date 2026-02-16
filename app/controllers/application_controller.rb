@@ -4,20 +4,8 @@ class ApplicationController < ActionController::Base
 
   before_action :redirect_to_setup_if_needed
   before_action :set_no_cache, if: :user_signed_in?
-  before_action :set_signed_in_cookie
-  around_action :switch_locale
-
-  def switch_locale(&action)
-    locale = params[:locale] || current_user.try(:locale) || I18n.default_locale
-    current_user.update(locale:) if current_user.present?
-    I18n.with_locale(locale, &action)
-  end
 
   private
-
-  def set_signed_in_cookie
-    cookies[:signed_in] = { value: user_signed_in?, domain: 'deltabadger.com' }
-  end
 
   def handle_unverified_request
     flash[:alert] = t('errors.unverified_request')
@@ -25,7 +13,7 @@ class ApplicationController < ActionController::Base
   end
 
   def default_url_options
-    { locale: (I18n.locale unless I18n.locale == I18n.default_locale) }
+    {}
   end
 
   def set_no_cache
