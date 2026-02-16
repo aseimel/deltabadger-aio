@@ -102,6 +102,11 @@ Sidekiq::ScheduledSet.new.each { |job| job.delete if matches }
 Sidekiq::Queue.new(queue_name).each { |job| job.delete if matches }
 ```
 
+## Communication Rules
+
+- **NEVER use placeholders** in commands, code, or examples. Always use the actual values. If you don't know a value, ask — don't substitute `<placeholder>`.
+- The Docker container name is **`deltabadger-aio`**. Always use this exact name.
+
 ## Project Overview
 
 Deltabadger is a self-hosted Dollar Cost Averaging (DCA) bot for cryptocurrency. It automates recurring purchases across multiple exchanges (Binance, Coinbase, Kraken, Bitstamp, Gemini, KuCoin, etc.). Built with Rails 6 + React/Redux frontend.

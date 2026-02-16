@@ -64,7 +64,7 @@ export const startBot = (id, continueParams = null) => dispatch => {
     continueParams = {continueSchedule: false, price: null}
   }
 
-  API.startBot({id: id, continueParams: continueParams}).then(({data: bot}) => {
+  return API.startBot({id: id, continueParams: continueParams}).then(({data: bot}) => {
     dispatch(clearErrors(bot.id))
     dispatch(botReloaded(bot))
     dispatch(openBot(bot.id))
