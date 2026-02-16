@@ -1,0 +1,28 @@
+<% parts = t('bot.withdraw_threshold_html', currency: bot.currency).split(/<split>.*?<\/split>/) %>
+
+<%= form_with model: bot,
+              url: bot_path(bot),
+              method: :patch,
+              class: "widget widget--main-bot-settings",
+              id: "withdrawal-settings",
+              data: {
+                turbo_stream: true,
+                controller: "form--submit form--submit-after-delay form--move-cursor-to-end form--html5-validations"
+              } do |f| %>
+  <div class="conversational conversational--small flex-justify-center">
+    <%= parts.first.html_safe %>
+    <%= f.number_field :threshold,
+        value: bot.threshold,
+        name: "bots_withdrawal[threshold]",
+        class: 'sinput numeric-input',
+        step: :any,
+        size: 2,
+        data: {
+          controller: "autowidth-input",
+          action: "input->form--submit-after-delay#submit input->autowidth-input#resize",
+          form__move_cursor_to_end_target: "input"
+        },
+        disabled: bot.working? %>
+    <%= parts.last.html_safe %>
+  </div>
+<% end %>

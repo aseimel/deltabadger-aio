@@ -37,6 +37,7 @@
         </div>
       </div>
     <% elsif @bot.withdrawal? %>
+      <%= render partial: "bots/withdrawals/settings", locals: { bot: @bot } %>
       <%= render partial: "bots/withdrawals/transactions", locals: { bot: @bot } %>
     <% end %>
   </div>

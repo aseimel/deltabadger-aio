@@ -111,7 +111,7 @@ class BotsController < ApplicationController
   end
 
   def withdrawal_bot_params
-    params.require(:bots_withdrawal).permit(:label)
+    params.require(:bots_withdrawal).permit(:label, :threshold)
   end
 
   def dca_single_asset_bot_params
@@ -134,7 +134,12 @@ class BotsController < ApplicationController
     if @bot.basic?
       basic_bot_params
     elsif @bot.withdrawal?
-      withdrawal_bot_params
+      result = {}
+      result[:label] = withdrawal_bot_params[:label].presence
+      if withdrawal_bot_params[:threshold].present?
+        result[:settings] = @bot.settings.merge('threshold' => withdrawal_bot_params[:threshold])
+      end
+      result.compact
     elsif @bot.dca_single_asset?
       {
         settings: @bot.settings.merge(
