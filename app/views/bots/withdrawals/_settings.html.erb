@@ -9,7 +9,7 @@
                 turbo_stream: true,
                 controller: "form--submit form--submit-after-delay form--move-cursor-to-end form--html5-validations"
               } do |f| %>
-  <div class="conversational conversational--small flex-justify-center">
+  <div class="conversational flex-justify-center">
     <%= parts.first.html_safe %>
     <%= f.number_field :threshold,
         value: bot.threshold,
