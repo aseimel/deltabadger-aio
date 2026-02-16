@@ -49,6 +49,26 @@ export const exchanges = {
     url: 'https://bitstamp.net/',
     translation_key: 'bitstamp'
   },
+  'bitget': {
+    name: 'Bitget',
+    url: 'https://www.bitget.com/',
+    translation_key: 'bitget'
+  },
+  'bybit': {
+    name: 'Bybit',
+    url: 'https://www.bybit.com/',
+    translation_key: 'bybit'
+  },
+  'mexc': {
+    name: 'MEXC',
+    url: 'https://www.mexc.com/',
+    translation_key: 'mexc'
+  },
+  'bitvavo': {
+    name: 'Bitvavo',
+    url: 'https://bitvavo.com/',
+    translation_key: 'bitvavo'
+  },
 }
 
 export const getExchange = (exchangeName, type) => {

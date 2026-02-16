@@ -18,7 +18,7 @@ const apiKeyNames = exchangeName => {
 }
 
 const isPassphraseRequired = exchangeName => {
-  return ['KuCoin'].includes(exchangeName)
+  return ['KuCoin', 'Bitget'].includes(exchangeName)
 }
 
 export const AddApiKey = ({
