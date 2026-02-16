@@ -1,34 +1,40 @@
 class DropDeadSaasTables < ActiveRecord::Migration[6.0]
   def up
-    # Payments/Subscriptions
-    drop_table :subscriptions, if_exists: true
-    drop_table :subscription_plan_variants, if_exists: true
-    drop_table :subscription_plans, if_exists: true
-    drop_table :payments, if_exists: true
+    # Drop foreign keys from active tables that reference dead tables
+    execute <<-SQL
+      DO $$
+      DECLARE r RECORD;
+      BEGIN
+        FOR r IN (
+          SELECT conname, conrelid::regclass AS table_name
+          FROM pg_constraint
+          WHERE confrelid IN (
+            'subscriptions'::regclass,
+            'subscription_plans'::regclass,
+            'subscription_plan_variants'::regclass,
+            'payments'::regclass
+          )
+          AND contype = 'f'
+        ) LOOP
+          EXECUTE 'ALTER TABLE ' || r.table_name || ' DROP CONSTRAINT ' || r.conname;
+        END LOOP;
+      EXCEPTION WHEN undefined_table THEN
+        NULL;
+      END $$;
+    SQL
 
-    # Content/Marketing
-    drop_table :articles, if_exists: true
-    drop_table :authors, if_exists: true
+    # Drop all dead SaaS tables with CASCADE for any remaining dependencies
+    tables = %w[
+      subscriptions subscription_plan_variants subscription_plans payments
+      articles authors
+      caffeinate_campaign_subscriptions caffeinate_mailings caffeinate_campaigns
+      ahoy_clicks ahoy_messages ahoy_opens
+      affiliates portfolio_assets portfolios surveys cards
+      countries conversion_rates
+    ]
 
-    # Email campaigns (Caffeinate)
-    drop_table :caffeinate_campaign_subscriptions, if_exists: true
-    drop_table :caffeinate_mailings, if_exists: true
-    drop_table :caffeinate_campaigns, if_exists: true
-
-    # Analytics (Ahoy)
-    drop_table :ahoy_clicks, if_exists: true
-    drop_table :ahoy_messages, if_exists: true
-    drop_table :ahoy_opens, if_exists: true
-
-    # Dead user features
-    drop_table :affiliates, if_exists: true
-    drop_table :portfolio_assets, if_exists: true
-    drop_table :portfolios, if_exists: true
-    drop_table :surveys, if_exists: true
-    drop_table :cards, if_exists: true
-
-    # Misc
-    drop_table :countries, if_exists: true
-    drop_table :conversion_rates, if_exists: true
+    tables.each do |table|
+      execute "DROP TABLE IF EXISTS #{table} CASCADE"
+    end
   end
 end
