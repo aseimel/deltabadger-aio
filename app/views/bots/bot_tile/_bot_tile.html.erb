@@ -37,7 +37,7 @@
   <% end %>
   <div class="bot-control">
     <%= render "bots/status/status_bar", bot: bot %>
-    <% if bot.legacy? %>
+    <% if bot.basic? %>
       <%= render "bots/status/status_button_legacy", bot: bot %>
     <% else %>
       <%= render "bots/status/status_button", bot: bot %>

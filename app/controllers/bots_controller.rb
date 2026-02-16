@@ -47,7 +47,7 @@ class BotsController < ApplicationController
     else
       @other_bots = current_user.bots.not_deleted.order(label: :asc).where.not(id: @bot.id).pluck(:id, :label, :type)
 
-      if @bot.legacy?
+      if !@bot.dca?
         # TODO: remove this once the legacy dashboard is removed
         respond_to do |format|
           format.html { render 'bots/react_dashboard' }
@@ -89,7 +89,7 @@ class BotsController < ApplicationController
       # flash.now[:notice] = t('alert.bot.bot_updated')
     else
       flash.now[:alert] = @bot.errors.messages.values.flatten.to_sentence
-      if @bot.legacy?
+      if !@bot.dca?
         render turbo_stream: turbo_stream_prepend_flash, status: :unprocessable_entity
       else
         render :update, status: :unprocessable_entity

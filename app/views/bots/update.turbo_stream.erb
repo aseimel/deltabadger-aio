@@ -1,5 +1,5 @@
 <%= turbo_stream.update dom_id(@bot, :label), @bot.label %>
-<% unless @bot.legacy? %>
+<% if @bot.dca? %>
   <% if @bot.dca_single_asset? %>
     <%= turbo_stream.replace 'settings', partial: 'bots/dca_single_assets/settings', locals: { bot: @bot } %>
   <% elsif @bot.dca_dual_asset? %>

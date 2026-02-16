@@ -5,7 +5,7 @@ class Bots::StartsController < ApplicationController
   before_action :set_bot
 
   def edit
-    render :edit_legacy if @bot.legacy?
+    render :edit_legacy if @bot.basic?
   end
 
   def update

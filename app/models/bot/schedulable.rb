@@ -12,7 +12,7 @@ module Bot::Schedulable
     store_accessor :transient_data,
                    :last_action_job_at
 
-    validates :interval, presence: true, inclusion: { in: INTERVALS.keys }, unless: :legacy?
+    validates :interval, presence: true, inclusion: { in: INTERVALS.keys }, if: :dca?
   end
 
   def interval_duration
@@ -61,7 +61,7 @@ module Bot::Schedulable
   end
 
   def next_interval_checkpoint_at
-    return legacy_next_interval_checkpoint_at if legacy?
+    return legacy_next_interval_checkpoint_at unless dca?
     return Time.current if effective_interval_duration.zero?
 
     # Use raw started_at from DB, not decorated version (e.g. from PriceLimitable)
@@ -79,7 +79,7 @@ module Bot::Schedulable
   end
 
   def last_interval_checkpoint_at
-    return legacy_last_interval_checkpoint_at if legacy?
+    return legacy_last_interval_checkpoint_at unless dca?
 
     next_interval_checkpoint_at - effective_interval_duration
   end

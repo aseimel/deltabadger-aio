@@ -2,6 +2,10 @@ class Bots::Withdrawal < Bot
   include LegacyMethods
   include Schedulable
 
+  def api_key_type
+    :withdrawal
+  end
+
   def restarting?
     false
     # restart_params = GetRestartParams.call(bot_id: id)

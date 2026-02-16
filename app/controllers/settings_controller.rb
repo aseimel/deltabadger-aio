@@ -138,7 +138,7 @@ class SettingsController < ApplicationController
     current_user.bots.not_deleted.not_stopped.each do |bot|
       next unless same_exchange_and_type?(bot, api_key)
 
-      if bot.legacy?
+      if bot.basic?
         StopBot.call(bot.id)
       else
         bot.stop

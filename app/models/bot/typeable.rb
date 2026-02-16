@@ -17,8 +17,8 @@ module Bot::Typeable
     scope :dca_dual_asset, -> { where(type: 'Bots::DcaDualAsset') }
     scope :not_dca_dual_asset, -> { where.not(type: 'Bots::DcaDualAsset') }
 
-    scope :legacy, -> { where(type: %w[Bots::Basic Bots::Withdrawal]) }
-    scope :not_legacy, -> { where.not(type: %w[Bots::Basic Bots::Withdrawal]) }
+    scope :legacy, -> { where(type: 'Bots::Basic') }
+    scope :not_legacy, -> { where.not(type: 'Bots::Basic') }
   end
 
   def basic?
@@ -37,7 +37,11 @@ module Bot::Typeable
     type == 'Bots::DcaDualAsset'
   end
 
+  def dca?
+    dca_single_asset? || dca_dual_asset?
+  end
+
   def legacy?
-    basic? || withdrawal?
+    basic?
   end
 end
