@@ -41,6 +41,27 @@ module Bot::Exportable
     end
   end
 
+  def withdrawals_csv
+    headers = ['Timestamp', 'Amount', 'Currency', 'Status']
+
+    transactions_data = transactions
+                        .where.not(status: :skipped)
+                        .order(:created_at)
+                        .pluck(:created_at, :amount, :status)
+
+    CSV.generate do |csv|
+      csv << headers
+      transactions_data.each do |created_at, amount, status|
+        csv << [
+          created_at.in_time_zone(user.time_zone),
+          amount,
+          currency,
+          status.humanize.titleize
+        ]
+      end
+    end
+  end
+
   private
 
   def parsed_csv_values(transactions_data)

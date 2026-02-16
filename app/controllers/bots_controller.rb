@@ -41,7 +41,9 @@ class BotsController < ApplicationController
 
   def show
     if request.format.turbo_stream?
-      @pagy, @orders = pagy_countless(@bot.transactions.order(created_at: :desc), items: 10)
+      scope = @bot.transactions.order(created_at: :desc)
+      scope = scope.where.not(status: :skipped) if @bot.withdrawal?
+      @pagy, @orders = pagy_countless(scope, items: 10)
       if params[:decimals].present?
         permitted_params = params.require(:decimals).permit(*Asset.all.pluck(:symbol))
         @decimals = permitted_params.transform_values(&:to_i)

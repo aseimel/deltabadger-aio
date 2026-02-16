@@ -1,7 +1,13 @@
 <%= tag.tr id: dom_id(order), class: order.skipped? ? 'text-inactive' : order.failed? ? 'text-danger' : '', data: { hw_animate_in_prepend: "animate-order-in" } do %>
   <td scope="row"><%= order.created_at.in_time_zone(current_user.time_zone).strftime("%Y-%m-%d %I:%M %p") %></td>
 
-  <td><%= order.amount.present? ? order.amount : '-' %> <%= order.bot.currency %></td>
+  <td>
+    <% if order.amount.present? %>
+      <%= order.amount %> <%= order.bot.currency %>
+    <% elsif order.failed? %>
+      <%= order.bot.currency %>
+    <% end %>
+  </td>
 
   <td>
     <% if order.failed? && order.error_messages.present? %>

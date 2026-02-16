@@ -8,9 +8,11 @@
       </tr>
     </thead>
     <tbody id="orders_list">
-      <% if bot.transactions.none? %>
+      <% if bot.transactions.where.not(status: :skipped).none? %>
         <tr id="orders_list_placeholder">
-          <td colspan="3" class="text-center text-inactive" style="padding-bottom: 2rem;">. . .</td>
+          <td colspan="3" class="text-center text-inactive" style="padding: 3rem 2rem;">
+            <%= t('bot.messages.no_withdrawals_yet') %>
+          </td>
         </tr>
       <% end %>
     </tbody>

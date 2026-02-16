@@ -140,6 +140,7 @@ en:
             failed_tooltip_explanation: "This order failed: %{error_message}"
             skipped_tooltip_explanation: "This order has been skipped because the amount was below the %{exchange_name} minimum order size. The amount has been buffered and added to the next order."
             skipped_withdrawal_tooltip_explanation: "This withdrawal was skipped because the balance was below the threshold."
+            no_withdrawals_yet: "No withdrawals yet. The bot will withdraw once the balance threshold is met."
             failed_status_bar_explanation: "Last order failed: %{error_message}"
             order_cancelled: 'Order cancelled'
             failed_to_cancel_order: 'Failed to cancel order'
