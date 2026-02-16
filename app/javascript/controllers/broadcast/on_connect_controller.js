@@ -5,19 +5,22 @@ export default class extends Controller {
   static values = { method: String, methodArgs: Object };
 
   connect() {
-    // console.log("broadcast--on-connect controller connected");
+    this.attempts = 0;
+    this.maxAttempts = 100; // 100 × 100ms = 10s
+
     this.checkConnectionInterval = setInterval(() => {
+      this.attempts++;
       if (this.#isConnectedToTurboStreamsChannel()) {
         this.#triggerBroadcast();
         clearInterval(this.checkConnectionInterval);
-      } else {
-        // console.log("Client is not connected to Turbo::StreamsChannel");
+      } else if (this.attempts >= this.maxAttempts) {
+        clearInterval(this.checkConnectionInterval);
+        this.#clearAllSpinners();
       }
     }, 100);
   }
 
   #triggerBroadcast() {
-    // console.log("triggerBroadcast", this.methodValue);
     fetch(`/broadcasts/${this.methodValue}`, {
       method: "POST",
       headers: {
@@ -25,6 +28,15 @@ export default class extends Controller {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(this.methodArgsValue),
+    }).catch(() => this.#clearAllSpinners());
+
+    // Safety net: clear any remaining spinners after 30s
+    setTimeout(() => this.#clearAllSpinners(), 30000);
+  }
+
+  #clearAllSpinners() {
+    this.element.querySelectorAll('.loader--small').forEach(loader => {
+      loader.remove();
     });
   }
 
