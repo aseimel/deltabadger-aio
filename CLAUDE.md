@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Remote Rules (ABSOLUTE — DO NOT VIOLATE)
+
+This repository (`deltabadger-aio`) is a FORK of `deltabadger/deltabadger`. There are two remotes:
+
+- **`fork`** (`aseimel/deltabadger-aio.git`) — THIS is our repo. Pull from here. Push to here.
+- **`origin`** (`deltabadger/deltabadger.git`) — This is the UPSTREAM source repo. NEVER pull, merge, rebase, or reset to this remote.
+
+### Rules:
+1. **`git pull` / `git fetch` MUST ONLY target the `fork` remote.** NEVER `origin`.
+2. **NEVER run `git reset --hard origin/...`** or any command that replaces our branch with upstream code.
+3. **NEVER merge or rebase `origin/main` into our branch.** The upstream repo has a completely different history, architecture (Rails 8, SQLite, SolidQueue), and will destroy our codebase.
+4. **Upstream code is ONLY integrated via manual cherry-picks** of specific bug fixes, adapted to our stack. Never wholesale branch operations.
+5. **If the user says "pull from GitHub"**, they mean `fork` (aseimel/deltabadger-aio), NOT `origin`.
+6. **When in doubt, ASK.** Do not guess which remote the user means.
+7. **When referring to remotes in conversation, use the GitHub repo name** (`deltabadger-aio` or `deltabadger`), NOT the git remote alias (`fork` or `origin`). The user does not think in terms of git remote aliases.
+
+**Violating these rules will destroy the codebase. There are no exceptions.**
+
 ## Container-Level Autonomy Rule (CRITICAL)
 
 ALL changes MUST work automatically via a Docker container update. The user must NEVER need to run manual commands inside the container (`docker exec`, `rails console`, etc.). Specifically:
