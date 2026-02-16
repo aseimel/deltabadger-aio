@@ -11,6 +11,7 @@ on:
       - 'config/**'
       - 'db/**'
       - 'lib/**'
+      - 'bin/**'
       - 'Gemfile*'
       - 'package.json'
       - 'yarn.lock'
