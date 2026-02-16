@@ -17,9 +17,7 @@ gem 'faraday'
 gem 'faraday-manual-cache', git: 'https://github.com/dobs/faraday-manual-cache'
 gem 'haml-rails', '~> 2.1'
 gem 'jbuilder', '~> 2.5'
-gem 'kaminari'
 gem 'nio4r', '2.5.9'
-gem 'parallel'
 gem 'pg', '>= 0.18', '< 2.0'
 gem 'puma', '~> 6.3'
 gem "rack", "2.2.20"
@@ -32,10 +30,8 @@ gem 'sidekiq-limit_fetch', git: 'https://github.com/brainopia/sidekiq-limit_fetc
 gem 'scenic'
 gem 'kraken_ruby_client', git: 'https://github.com/guillemap/kraken_ruby_client', branch: 'add-withdrawal-endpoints'
 gem 'i18n-js', '~> 3.8.0'
-gem 'whenever', require: false
 gem 'sidekiq-prometheus-exporter', '~> 0.1'
 gem 'bundler', '~> 2.5.23'
-gem 'lol_dba'
 
 group :development, :test do
   gem 'debug'

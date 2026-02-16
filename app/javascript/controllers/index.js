@@ -102,6 +102,3 @@ application.register("tooltip", TooltipController)
 
 import TurboFrameTriggerController from "./turbo_frame_trigger_controller"
 application.register("turbo-frame-trigger", TurboFrameTriggerController)
-
-import ZarazController from "./zaraz_controller"
-application.register("zaraz", ZarazController)
