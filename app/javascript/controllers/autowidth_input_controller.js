@@ -18,19 +18,17 @@ export default class extends Controller {
   }
 
   resize() {
-    // Use input value or placeholder as the text to measure
     const text = this.element.value || this.element.placeholder || ''
     this.mirrorElement.textContent = text;
+    const mirrorWidth = this.mirrorElement.offsetWidth;
 
-    // Measure the width of the mirror element
-    const measuredWidth = this.mirrorElement.offsetWidth;
+    // Shrink to measure true content width via the input's own rendering
+    this.element.style.width = '0';
+    const scrollWidth = this.element.scrollWidth;
 
-    // Add a small buffer (e.g., 2px) to prevent text clipping or overflow
-    const buffer = 8;
-    const newWidth = Math.max(measuredWidth + buffer);
-
-    // Set the input element's width
-    this.element.style.width = `calc(max(${this.minWidthValue}, ${newWidth}px))`;
+    // Use the wider of the two measurements plus a small buffer for rounding
+    const finalWidth = Math.max(mirrorWidth, scrollWidth) + 4;
+    this.element.style.width = `calc(max(${this.minWidthValue}, ${finalWidth}px))`;
   }
 
   #createMirrorElement() {
