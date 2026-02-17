@@ -23,6 +23,9 @@ class BotsController < ApplicationController
     @has_inactive = current_user.bots.not_deleted.where(status: %i[created stopped]).exists?
     @show_filters = @total_bots > 1 && @has_active && @has_inactive
 
+    @dca_bots = @bots.reject(&:withdrawal?)
+    @withdrawal_bots = @bots.select(&:withdrawal?)
+
     @pnl_hash = {}
     @loading_hash = {}
     @bots.each do |bot|

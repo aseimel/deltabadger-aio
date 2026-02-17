@@ -19,10 +19,19 @@
       <% end %>
     </div>
   </div>
-  <% ids_to_load = @loading_hash.select { |_, loading| loading }.keys %>
-  <%= tag.div class: 'itiles', data: ids_to_load.any? ? { controller: "broadcast--on-connect",
-                                                          broadcast__on_connect_method_value: "pnl_update",
-                                                          broadcast__on_connect_method_args_value: {    bot_ids: ids_to_load }.to_json } : {} do %>
-    <%= render partial: 'bots/bot_tile/bot_tile', collection: @bots, as: :bot, locals: { pnl_hash: @pnl_hash, loading_hash: @loading_hash } %>
+  <% if @dca_bots.any? %>
+    <% ids_to_load = @loading_hash.select { |_, loading| loading }.keys %>
+    <%= tag.div class: 'itiles', data: ids_to_load.any? ? { controller: "broadcast--on-connect",
+                                                            broadcast__on_connect_method_value: "pnl_update",
+                                                            broadcast__on_connect_method_args_value: { bot_ids: ids_to_load }.to_json } : {} do %>
+      <%= render partial: 'bots/bot_tile/bot_tile', collection: @dca_bots, as: :bot, locals: { pnl_hash: @pnl_hash, loading_hash: @loading_hash } %>
+    <% end %>
+  <% end %>
+
+  <% if @withdrawal_bots.any? %>
+    <div class="itiles-section-label">Withdrawals</div>
+    <div class="itiles">
+      <%= render partial: 'bots/bot_tile/bot_tile', collection: @withdrawal_bots, as: :bot, locals: { pnl_hash: @pnl_hash, loading_hash: @loading_hash } %>
+    </div>
   <% end %>
 <% end %>
