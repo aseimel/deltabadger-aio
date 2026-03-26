@@ -166,12 +166,36 @@ module Bot::AdaptiveDcaable
   end
 
   def initialize_adaptive_ewma!(price)
-    initial_sigma_sq = (price * INITIAL_SIGMA_FRACTION)**2
-    self.adaptive_mu_fast = price.to_s
+    avg_price = fetch_24h_average_price
+    belief_price = avg_price || price
+
+    initial_sigma_sq = if avg_price && @_24h_prices&.length&.>(1)
+                         @_24h_prices.sum { |p| (p - belief_price)**2 } / @_24h_prices.length
+                       else
+                         (price * INITIAL_SIGMA_FRACTION)**2
+                       end
+
+    self.adaptive_mu_fast = belief_price.to_s
     self.adaptive_sigma_sq_fast = initial_sigma_sq.to_s
-    self.adaptive_mu_slow = price.to_s
+    self.adaptive_mu_slow = belief_price.to_s
     self.adaptive_sigma_sq_slow = initial_sigma_sq.to_s
     @current_adaptive_price = price
+  end
+
+  def fetch_24h_average_price
+    return nil unless respond_to?(:ticker) && ticker.present?
+
+    result = ticker.get_candles(start_at: 24.hours.ago, timeframe: 1.hour)
+    return nil if result.failure?
+
+    candles = result.data
+    return nil if candles.blank?
+
+    @_24h_prices = candles.map { |c| c[4].to_f }
+    @_24h_prices.sum / @_24h_prices.length
+  rescue StandardError => e
+    Rails.logger.warn("Adaptive DCA: failed to fetch 24h candles for cold start seeding: #{e.message}")
+    nil
   end
 
   def initialize_adaptive_dca_settings
