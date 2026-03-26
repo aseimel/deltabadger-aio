@@ -177,6 +177,7 @@ en:
             ceiling: "Max spend per hour"
             effective_rate: "%{amount}/h (baseline: %{baseline}/h %{quote})"
             belief_price: "Fair price estimate: %{price} %{quote}"
+            reset: "Reset — re-calibrate from 24h market data"
             calibrating: "Calibrating — the model is learning current price levels..."
             calibrating_short: "Calibrating..."
         smart_intervals_disclaimer: 'Orders size on %{exchange} is defined in %{currency}. The minimum order size is %{minimum}%{currency}.'

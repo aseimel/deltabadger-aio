@@ -23,7 +23,8 @@ module Bot::AdaptiveDcaable
                    :adaptive_dca_enabled,
                    :adaptive_dca_aggressiveness,
                    :adaptive_dca_floor_pct,
-                   :adaptive_dca_ceiling_pct
+                   :adaptive_dca_ceiling_pct,
+                   :adaptive_dca_reset
 
     store_accessor :transient_data,
                    :adaptive_mu_fast,
@@ -34,6 +35,7 @@ module Bot::AdaptiveDcaable
 
     after_initialize :initialize_adaptive_dca_settings
     before_save :handle_adaptive_dca_toggle, if: :will_save_change_to_settings?
+    before_save :handle_adaptive_dca_reset, if: :will_save_change_to_settings?
 
     decorators = Module.new do
       def parse_params(params)
@@ -41,7 +43,8 @@ module Bot::AdaptiveDcaable
           adaptive_dca_enabled: params[:adaptive_dca_enabled].presence&.in?(%w[1 true]),
           adaptive_dca_aggressiveness: params[:adaptive_dca_aggressiveness].presence,
           adaptive_dca_floor_pct: params[:adaptive_dca_floor_pct].presence&.to_i,
-          adaptive_dca_ceiling_pct: params[:adaptive_dca_ceiling_pct].presence&.to_i
+          adaptive_dca_ceiling_pct: params[:adaptive_dca_ceiling_pct].presence&.to_i,
+          adaptive_dca_reset: params[:adaptive_dca_reset].presence&.in?(%w[1 true]) || nil
         ).compact
       end
 
@@ -204,6 +207,14 @@ module Bot::AdaptiveDcaable
   rescue StandardError => e
     Rails.logger.warn("Adaptive DCA: failed to fetch 24h candles for cold start seeding: #{e.message}")
     nil
+  end
+
+  def handle_adaptive_dca_reset
+    return unless adaptive_dca_reset == true
+
+    clear_adaptive_ewma_state!
+    seed_adaptive_ewma_from_market!
+    self.adaptive_dca_reset = nil
   end
 
   def seed_adaptive_ewma_from_market!

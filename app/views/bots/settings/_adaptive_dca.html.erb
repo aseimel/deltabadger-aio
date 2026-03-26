@@ -61,6 +61,12 @@
                   style: "margin-left: 0.125rem; width: 50px;",
                   disabled: bot.working? %> %
           </div>
+          <div class="adaptive-dca-settings__row">
+            <label>
+              <%= f.check_box :adaptive_dca_reset, data: { action: "change->form--submit#submit" }, disabled: bot.working? %>
+              <%= t("bot.adaptive_dca.reset") %>
+            </label>
+          </div>
         </div>
         <% multiplier = bot.adaptive_multiplier %>
         <% baseline_hourly = bot.quote_amount.to_f / 24.0 %>
