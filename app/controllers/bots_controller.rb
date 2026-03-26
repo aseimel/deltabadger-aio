@@ -81,6 +81,12 @@ class BotsController < ApplicationController
         metrics_with_current_prices_and_candles = @bot.metrics_with_current_prices_and_candles_from_cache
         @loading = metrics_with_current_prices_and_candles.nil?
         @metrics = @loading ? @bot.metrics : metrics_with_current_prices_and_candles
+
+        if @bot.dca_single_asset? && @bot.respond_to?(:recent_metrics)
+          current_price = @metrics[:total_base_amount].positive? ?
+            @metrics[:total_amount_value_in_quote] / @metrics[:total_base_amount] : nil
+          @recent_metrics = @bot.recent_metrics(days: 30, current_price: current_price)
+        end
       end
     end
   end

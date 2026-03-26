@@ -62,28 +62,29 @@
                   disabled: bot.working? %> %
           </div>
         </div>
-        <% status = bot.adaptive_dca_status %>
-        <% if status && !status[:cold_start] %>
-          <div class="adaptive-dca-status">
-            <small>
-              <span class="adaptive-dca-status__multiplier <%= status[:current_multiplier] >= 1 ? 'text-success' : 'text-danger' %>">
-                <%= number_with_precision(status[:current_multiplier], precision: 2) %>&times;
-              </span>
-              <%= t("bot.adaptive_dca.effective_rate",
-                    amount: number_with_precision(status[:effective_hourly_amount], precision: 2),
-                    baseline: number_with_precision(status[:baseline_hourly_amount], precision: 2),
-                    quote: bot.quote_asset.symbol) %>
-              <br/>
+        <% multiplier = bot.adaptive_multiplier %>
+        <% baseline_hourly = bot.quote_amount.to_f / 24.0 %>
+        <% effective_hourly = baseline_hourly * multiplier %>
+        <% cold_start = bot.adaptive_dca_cold_start? %>
+        <div class="adaptive-dca-status">
+          <small>
+            <span class="adaptive-dca-status__multiplier <%= multiplier >= 1 ? 'text-success' : 'text-danger' %>">
+              <%= number_with_precision(multiplier, precision: 2) %>&times;
+            </span>
+            <%= t("bot.adaptive_dca.effective_rate",
+                  amount: number_with_precision(effective_hourly, precision: 2),
+                  baseline: number_with_precision(baseline_hourly, precision: 2),
+                  quote: bot.quote_asset.symbol) %>
+            <br/>
+            <% if cold_start %>
+              <span class="text-muted"><%= t("bot.adaptive_dca.calibrating") %></span>
+            <% else %>
               <%= t("bot.adaptive_dca.belief_price",
-                    price: number_with_precision(status[:ewma_belief_price], precision: 2),
+                    price: number_with_precision(bot.blended_mu, precision: 2),
                     quote: bot.quote_asset.symbol) %>
-            </small>
-          </div>
-        <% elsif status && status[:cold_start] %>
-          <div class="adaptive-dca-status">
-            <small class="text-muted"><%= t("bot.adaptive_dca.calibrating") %></small>
-          </div>
-        <% end %>
+            <% end %>
+          </small>
+        </div>
       <% end %>
     </div>
   </div>

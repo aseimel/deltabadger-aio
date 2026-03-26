@@ -98,11 +98,15 @@ module Bots::DcaSingleAsset::Measurable
   def broadcast_metrics_update
     metrics_data = metrics_with_current_prices_and_candles
 
+    current_price = metrics_data[:total_base_amount].positive? ?
+      metrics_data[:total_amount_value_in_quote] / metrics_data[:total_base_amount] : nil
+    recent = recent_metrics(days: 30, current_price: current_price)
+
     broadcast_replace_to(
       ["user_#{user_id}", :bot_updates],
       target: 'metrics',
       partial: 'bots/dca_single_assets/metrics',
-      locals: { bot: self, metrics: metrics_data, loading: false }
+      locals: { bot: self, metrics: metrics_data, loading: false, recent_metrics: recent }
     )
 
     broadcast_replace_to(
@@ -130,6 +134,42 @@ module Bots::DcaSingleAsset::Measurable
 
   def metrics_with_current_prices_and_candles_from_cache
     Rails.cache.read(metrics_with_current_prices_and_candles_cache_key)
+  end
+
+  def recent_metrics(days: 30, current_price: nil)
+    cutoff = days.days.ago
+    recent_txns = transactions.submitted
+                              .where('created_at >= ?', cutoff)
+                              .order(created_at: :asc)
+                              .pluck(:price, :amount_exec, :quote_amount_exec, :amount)
+
+    data = { total_base_amount: 0, total_quote_amount_invested: 0,
+             total_amount_value_in_quote: 0, pnl: nil, average_buy_price: nil }
+    return data if recent_txns.empty?
+
+    prices = []
+    amounts = []
+    total_invested = 0
+    total_base = 0
+
+    recent_txns.each do |price, amount_exec, quote_amount_exec, amount|
+      quote_amount_exec ||= price * amount
+      amount_exec ||= amount
+      next if price.blank? || quote_amount_exec.blank? || amount_exec.blank?
+      next if quote_amount_exec.zero? || amount_exec.zero?
+
+      total_invested += quote_amount_exec
+      total_base += amount_exec
+      prices << price
+      amounts << amount_exec
+    end
+
+    data[:total_base_amount] = total_base
+    data[:total_quote_amount_invested] = total_invested
+    data[:total_amount_value_in_quote] = current_price ? total_base * current_price : total_base * (prices.last || 0)
+    data[:pnl] = calculate_pnl(data[:total_quote_amount_invested], data[:total_amount_value_in_quote])
+    data[:average_buy_price] = Utilities::Math.weighted_average(prices, amounts)
+    data
   end
 
   private

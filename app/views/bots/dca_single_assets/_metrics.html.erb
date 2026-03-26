@@ -28,7 +28,7 @@
         <tbody id="assets_metrics_list">
           <% if bot.base_asset %>
             <tr>
-              <td scope="row"><%= bot.base_asset.symbol %></td>
+              <td scope="row"><%= bot.base_asset.symbol %> <small class="text-muted"><%= t('data_labels.all_time') %></small></td>
               <td><%= metrics[:total_base_amount].round(bot.decimals[:base] || 8) %></td>
               <td><%= metrics[:average_buy_price].present? ? metrics[:average_buy_price].round(bot.decimals[:base_price] || 8) : '-' %></td>
               <% if loading %>
@@ -45,6 +45,26 @@
                 </td>
               <% end %>
             </tr>
+            <% if defined?(recent_metrics) && recent_metrics && recent_metrics[:total_quote_amount_invested].positive? %>
+              <tr>
+                <td scope="row"><%= bot.base_asset.symbol %> <small class="text-muted"><%= t('data_labels.last_30d') %></small></td>
+                <td><%= recent_metrics[:total_base_amount].round(bot.decimals[:base] || 8) %></td>
+                <td><%= recent_metrics[:average_buy_price].present? ? recent_metrics[:average_buy_price].round(bot.decimals[:base_price] || 8) : '-' %></td>
+                <% if loading %>
+                  <td><div class="loader--small" style="position: unset; float:right"></div></td>
+                <% else %>
+                  <td><%= recent_metrics[:total_amount_value_in_quote].round(bot.decimals[:quote] || 8) %></td>
+                <% end %>
+                <% if loading %>
+                  <td><div class="loader--small" style="position: unset; float:right"></div></td>
+                <% else %>
+                  <% recent_pnl = recent_metrics[:pnl] %>
+                  <td class="<%= recent_pnl.negative? ? 'text-danger' : recent_pnl.positive? ? 'text-success' : '' %>">
+                    <%= recent_pnl ? format_percent(recent_pnl, precision: 1) : '-' %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>

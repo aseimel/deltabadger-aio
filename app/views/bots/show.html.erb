@@ -29,7 +29,7 @@
         <div class="column gap-1">
           <%= render partial: "bots/chart", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
           <% if @bot.dca_single_asset? %>
-            <%= render partial: "bots/dca_single_assets/metrics", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
+            <%= render partial: "bots/dca_single_assets/metrics", locals: { bot: @bot, metrics: @metrics, loading: @loading, recent_metrics: @recent_metrics } %>
           <% elsif @bot.dca_dual_asset? %>
             <%= render partial: "bots/dca_dual_assets/metrics", locals: { bot: @bot, metrics: @metrics, loading: @loading } %>
           <% end %>

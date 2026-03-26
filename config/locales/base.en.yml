@@ -43,6 +43,8 @@ en:
         pnl: "P/L"
         bought: "Bought"
         current_price: "Current Price"
+        last_30d: "Last 30d"
+        all_time: "All time"
     days_left:
         one: '1 day left'
         other: '%{count} days left'
