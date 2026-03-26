@@ -206,6 +206,23 @@ module Bot::AdaptiveDcaable
     nil
   end
 
+  def seed_adaptive_ewma_from_market!
+    avg_price = fetch_24h_average_price
+    return unless avg_price
+
+    initial_sigma_sq = if @_24h_prices&.length&.>(1)
+                         @_24h_prices.sum { |p| (p - avg_price)**2 } / @_24h_prices.length
+                       else
+                         (avg_price * INITIAL_SIGMA_FRACTION)**2
+                       end
+
+    self.adaptive_mu_fast = avg_price.to_s
+    self.adaptive_sigma_sq_fast = initial_sigma_sq.to_s
+    self.adaptive_ema2_fast = avg_price.to_s
+    self.adaptive_mu_slow = avg_price.to_s
+    self.adaptive_sigma_sq_slow = initial_sigma_sq.to_s
+  end
+
   def initialize_adaptive_dca_settings
     self.adaptive_dca_enabled ||= false
     self.adaptive_dca_aggressiveness ||= ADAPTIVE_DCA_DEFAULT_AGGRESSIVENESS
@@ -223,6 +240,9 @@ module Bot::AdaptiveDcaable
       self.adaptive_dca_aggressiveness = ADAPTIVE_DCA_DEFAULT_AGGRESSIVENESS if adaptive_dca_aggressiveness.blank?
       self.adaptive_dca_floor_pct = ADAPTIVE_DCA_DEFAULT_FLOOR_PCT if adaptive_dca_floor_pct.blank?
       self.adaptive_dca_ceiling_pct = ADAPTIVE_DCA_DEFAULT_CEILING_PCT if adaptive_dca_ceiling_pct.blank?
+      # Seed EWMA immediately with 24h market data so the UI shows
+      # the belief price right away instead of "Calibrating..."
+      seed_adaptive_ewma_from_market!
     else
       clear_adaptive_ewma_state!
     end
