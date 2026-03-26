@@ -1,0 +1,90 @@
+<%= form_with model: bot,
+              url: path,
+              method: method,
+              class: "widget #{bot.adaptive_dca_enabled? ? "bot-settings--active" : "bot-settings--inactive"}",
+              data: {
+                controller: "class-toggle form--submit form--submit-after-delay form--html5-validations",
+                class_toggle_target: "togglable",
+                class_toggle_toggle_classes_value: ["bot-settings--active", "bot-settings--inactive"],
+                turbo_stream: true
+              } do |f| %>
+  <div class="toggle-group">
+    <div class="toggle">
+      <%= f.check_box :adaptive_dca_enabled, data: { action: "change->form--submit#submit change->class-toggle#toggle" }, disabled: bot.working? %>
+      <div class="toggle__style"></div>
+    </div>
+    <div class="toggle-group__info">
+      <div class="toggle-group__info__label">
+        <%= f.label :adaptive_dca_enabled, class: "conversational conversational--small conversational--disabled" do %>
+          <%= t("bot.adaptive_dca.label") %>
+        <% end %>
+      </div>
+      <% if bot.adaptive_dca_enabled? %>
+        <div class="adaptive-dca-settings">
+          <small><%= t("bot.adaptive_dca.hourly_note") %></small>
+          <div class="adaptive-dca-settings__row">
+            <span><%= t("bot.adaptive_dca.aggressiveness") %></span>
+            <%= f.select :adaptive_dca_aggressiveness,
+                  Bot::AdaptiveDcaable::ADAPTIVE_DCA_AGGRESSIVENESS_LEVELS.keys.map { |k| [t("bot.adaptive_dca.#{k}"), k] },
+                  { selected: bot.adaptive_dca_aggressiveness },
+                  class: "sinput sinput--select",
+                  data: { action: "change->form--submit#submit" },
+                  disabled: bot.working? %>
+          </div>
+          <div class="adaptive-dca-settings__row">
+            <span><%= t("bot.adaptive_dca.floor") %></span>
+            <%= f.number_field :adaptive_dca_floor_pct,
+                  value: bot.adaptive_dca_floor_pct,
+                  class: 'sinput numeric-input',
+                  step: 1,
+                  min: 1,
+                  max: 100,
+                  size: 2,
+                  data: { controller: "autowidth-input",
+                          action: "input->form--submit-after-delay#submit input->autowidth-input#resize",
+                          form__move_cursor_to_end_target: "input" },
+                  style: "margin-left: 0.125rem; width: 50px;",
+                  disabled: bot.working? %> %
+          </div>
+          <div class="adaptive-dca-settings__row">
+            <span><%= t("bot.adaptive_dca.ceiling") %></span>
+            <%= f.number_field :adaptive_dca_ceiling_pct,
+                  value: bot.adaptive_dca_ceiling_pct,
+                  class: 'sinput numeric-input',
+                  step: 1,
+                  min: 101,
+                  max: 500,
+                  size: 2,
+                  data: { controller: "autowidth-input",
+                          action: "input->form--submit-after-delay#submit input->autowidth-input#resize",
+                          form__move_cursor_to_end_target: "input" },
+                  style: "margin-left: 0.125rem; width: 50px;",
+                  disabled: bot.working? %> %
+          </div>
+        </div>
+        <% status = bot.adaptive_dca_status %>
+        <% if status && !status[:cold_start] %>
+          <div class="adaptive-dca-status">
+            <small>
+              <span class="adaptive-dca-status__multiplier <%= status[:current_multiplier] >= 1 ? 'text-success' : 'text-danger' %>">
+                <%= number_with_precision(status[:current_multiplier], precision: 2) %>&times;
+              </span>
+              <%= t("bot.adaptive_dca.effective_rate",
+                    amount: number_with_precision(status[:effective_hourly_amount], precision: 2),
+                    baseline: number_with_precision(status[:baseline_hourly_amount], precision: 2),
+                    quote: bot.quote_asset.symbol) %>
+              <br/>
+              <%= t("bot.adaptive_dca.belief_price",
+                    price: number_with_precision(status[:ewma_belief_price], precision: 2),
+                    quote: bot.quote_asset.symbol) %>
+            </small>
+          </div>
+        <% elsif status && status[:cold_start] %>
+          <div class="adaptive-dca-status">
+            <small class="text-muted"><%= t("bot.adaptive_dca.calibrating") %></small>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
