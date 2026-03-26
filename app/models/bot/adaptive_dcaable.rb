@@ -12,7 +12,7 @@ module Bot::AdaptiveDcaable
   ADAPTIVE_DCA_DEFAULT_AGGRESSIVENESS = 'moderate'
 
   # EWMA parameters
-  LAMBDA_FAST = 0.05   # ~14h half-life with hourly observations
+  LAMBDA_FAST = 0.10   # ~7h raw half-life, ~5h effective with DEMA
   LAMBDA_SLOW = 0.005  # ~6d half-life with hourly observations
   FAST_WEIGHT = 0.4
   SLOW_WEIGHT = 0.6
@@ -28,6 +28,7 @@ module Bot::AdaptiveDcaable
     store_accessor :transient_data,
                    :adaptive_mu_fast,
                    :adaptive_sigma_sq_fast,
+                   :adaptive_ema2_fast,
                    :adaptive_mu_slow,
                    :adaptive_sigma_sq_slow
 
@@ -102,6 +103,7 @@ module Bot::AdaptiveDcaable
     else
       mu_f = adaptive_mu_fast.to_f
       sq_f = adaptive_sigma_sq_fast.to_f
+      ema2_f = adaptive_ema2_fast.to_f
       mu_s = adaptive_mu_slow.to_f
       sq_s = adaptive_sigma_sq_slow.to_f
 
@@ -109,6 +111,8 @@ module Bot::AdaptiveDcaable
       self.adaptive_mu_fast = (LAMBDA_FAST * price + (1 - LAMBDA_FAST) * mu_f).to_s
       self.adaptive_sigma_sq_fast = (LAMBDA_FAST * (price - adaptive_mu_fast.to_f)**2 +
                                      (1 - LAMBDA_FAST) * sq_f).to_s
+      # DEMA: EMA of the fast EMA (for lag compensation)
+      self.adaptive_ema2_fast = (LAMBDA_FAST * adaptive_mu_fast.to_f + (1 - LAMBDA_FAST) * ema2_f).to_s
 
       # Slow EWMA update
       self.adaptive_mu_slow = (LAMBDA_SLOW * price + (1 - LAMBDA_SLOW) * mu_s).to_s
@@ -122,13 +126,16 @@ module Bot::AdaptiveDcaable
   def clear_adaptive_ewma_state!
     self.adaptive_mu_fast = nil
     self.adaptive_sigma_sq_fast = nil
+    self.adaptive_ema2_fast = nil
     self.adaptive_mu_slow = nil
     self.adaptive_sigma_sq_slow = nil
     @current_adaptive_price = nil
   end
 
   def blended_mu
-    FAST_WEIGHT * adaptive_mu_fast.to_f + SLOW_WEIGHT * adaptive_mu_slow.to_f
+    # DEMA on fast component: 2*EMA - EMA(EMA) for lag compensation
+    dema_fast = 2.0 * adaptive_mu_fast.to_f - adaptive_ema2_fast.to_f
+    FAST_WEIGHT * dema_fast + SLOW_WEIGHT * adaptive_mu_slow.to_f
   end
 
   def blended_sigma
@@ -177,6 +184,7 @@ module Bot::AdaptiveDcaable
 
     self.adaptive_mu_fast = belief_price.to_s
     self.adaptive_sigma_sq_fast = initial_sigma_sq.to_s
+    self.adaptive_ema2_fast = belief_price.to_s
     self.adaptive_mu_slow = belief_price.to_s
     self.adaptive_sigma_sq_slow = initial_sigma_sq.to_s
     @current_adaptive_price = price
