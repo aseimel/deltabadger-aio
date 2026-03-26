@@ -174,6 +174,10 @@ module Api
       price_range_enabled
       use_subaccount
       selected_subaccount
+      adaptive_dca_enabled
+      adaptive_dca_aggressiveness
+      adaptive_dca_floor_pct
+      adaptive_dca_ceiling_pct
     ].freeze
 
     def trading_bot_create_params
@@ -209,6 +213,10 @@ module Api
       price_range_enabled
       use_subaccount
       selected_subaccount
+      adaptive_dca_enabled
+      adaptive_dca_aggressiveness
+      adaptive_dca_floor_pct
+      adaptive_dca_ceiling_pct
     ].freeze
 
     def trading_bot_update_params

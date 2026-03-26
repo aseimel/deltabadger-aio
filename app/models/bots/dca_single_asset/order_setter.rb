@@ -81,6 +81,11 @@ module Bots::DcaSingleAsset::OrderSetter
               result.data
             end
 
+    # Update adaptive DCA EWMA state with the observed price before calculating order amount.
+    # This must happen before calculate_order_data because effective_quote_amount (called by
+    # pending_quote_amount) uses the EWMA state to compute the adaptive multiplier.
+    update_adaptive_ewma!(price) if adaptive_dca_enabled?
+
     order_data = calculate_order_data(
       price: price,
       order_amount_in_quote: order_amount_in_quote,

@@ -13,6 +13,10 @@ module BotsManager
           price_range
           use_subaccount
           selected_subaccount
+          adaptive_dca_enabled
+          adaptive_dca_aggressiveness
+          adaptive_dca_floor_pct
+          adaptive_dca_ceiling_pct
         ].freeze
 
         def call(bot, params)

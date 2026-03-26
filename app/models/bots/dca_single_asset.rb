@@ -17,6 +17,7 @@ class Bots::DcaSingleAsset < Bot
 
   before_save :set_tickers, if: :will_save_change_to_exchange_id?
 
+  include AdaptiveDcaable        # decorators for: parse_params, effective_quote_amount, effective_interval_duration
   include SmartIntervalable      # decorators for: parse_params, effective_quote_amount, effective_interval_duration
   include LimitOrderable         # decorators for: parse_params, execute_action
   include QuoteAmountLimitable   # decorators for: parse_params, pending_quote_amount

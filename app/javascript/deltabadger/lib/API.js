@@ -87,7 +87,11 @@ const API = {
         Math.max(params.priceRange.low, params.priceRange.high)
       ],
       use_subaccount: params.useSubaccount,
-      selected_subaccount: params.selectedSubaccount
+      selected_subaccount: params.selectedSubaccount,
+      adaptive_dca_enabled: params.adaptiveDcaEnabled,
+      adaptive_dca_aggressiveness: params.adaptiveDcaAggressiveness,
+      adaptive_dca_floor_pct: params.adaptiveDcaFloorPct,
+      adaptive_dca_ceiling_pct: params.adaptiveDcaCeilingPct
     }
     return client.request({ url, data: { bot: botParams }, method: 'post' }).then(data => data.data);
   },
@@ -123,7 +127,11 @@ const API = {
         Math.max(params.priceRange.low, params.priceRange.high)
       ],
       use_subaccount: params.useSubaccount,
-      selected_subaccount: params.selectedSubaccount
+      selected_subaccount: params.selectedSubaccount,
+      adaptive_dca_enabled: params.adaptiveDcaEnabled,
+      adaptive_dca_aggressiveness: params.adaptiveDcaAggressiveness,
+      adaptive_dca_floor_pct: params.adaptiveDcaFloorPct,
+      adaptive_dca_ceiling_pct: params.adaptiveDcaCeilingPct
     }
     return client.request({ url, data: { bot: botParams }, method: 'put' }).then(data => data.data);
   },

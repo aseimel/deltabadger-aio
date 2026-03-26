@@ -27,7 +27,9 @@ module BotsManager::Trading::Validators
       attr_reader :interval, :base, :quote, :type, :order_type, :price,
                   :percentage, :allowed_symbols, :free_plan_symbols,
                   :pro, :force_smart_intervals, :smart_intervals_value, :exchange_name,
-                  :price_range_enabled, :price_range, :use_subaccount, :selected_subaccount
+                  :price_range_enabled, :price_range, :use_subaccount, :selected_subaccount,
+                  :adaptive_dca_enabled, :adaptive_dca_aggressiveness,
+                  :adaptive_dca_floor_pct, :adaptive_dca_ceiling_pct
 
       TYPES = %w[buy sell sell_old].freeze
       ORDER_TYPES = %w[market limit].freeze
@@ -47,11 +49,23 @@ module BotsManager::Trading::Validators
         smaller_than: 100
       }
       validates :use_subaccount, inclusion: { in: [true, false, nil] }
+      validates :adaptive_dca_enabled, inclusion: { in: [true, false, nil] }
+      validates :adaptive_dca_aggressiveness,
+                inclusion: { in: Bot::AdaptiveDcaable::ADAPTIVE_DCA_AGGRESSIVENESS_LEVELS.keys },
+                if: :adaptive_dca_enabled?
+      validates :adaptive_dca_floor_pct,
+                numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 100 },
+                if: :adaptive_dca_enabled?
+      validates :adaptive_dca_ceiling_pct,
+                numericality: { only_integer: true, greater_than_or_equal_to: 101, less_than_or_equal_to: 500 },
+                if: :adaptive_dca_enabled?
       validate :percentage_if_limit_order
       validate :smart_intervals_above_minimum
       validate :validate_price_range
       validate :validate_use_subaccount
       validate :validate_subaccount_name
+      validate :validate_adaptive_dca_guardrails
+      validate :validate_adaptive_dca_smart_intervals_exclusivity
 
       def initialize(params, user, allowed_symbols, free_plan_symbols, exchange_name, exchange_id)
         @interval = params['interval']
@@ -72,6 +86,10 @@ module BotsManager::Trading::Validators
         @minimums = GetSmartIntervalsInfo.new.call(params.merge(exchange_name:), user).data
         @use_subaccount = params['use_subaccount']
         @selected_subaccount = params['selected_subaccount']
+        @adaptive_dca_enabled = params['adaptive_dca_enabled']
+        @adaptive_dca_aggressiveness = params['adaptive_dca_aggressiveness']
+        @adaptive_dca_floor_pct = params['adaptive_dca_floor_pct']&.to_i
+        @adaptive_dca_ceiling_pct = params['adaptive_dca_ceiling_pct']&.to_i
         @exchange_id = exchange_id
         @user = user
       end
@@ -149,6 +167,24 @@ module BotsManager::Trading::Validators
 
       def subaccounts_allowed_exchange
         []
+      end
+
+      def adaptive_dca_enabled?
+        @adaptive_dca_enabled == true
+      end
+
+      def validate_adaptive_dca_guardrails
+        return unless adaptive_dca_enabled?
+        return if @adaptive_dca_floor_pct.blank? || @adaptive_dca_ceiling_pct.blank?
+        return if @adaptive_dca_floor_pct < @adaptive_dca_ceiling_pct
+
+        errors.add(:adaptive_dca_floor_pct, 'Floor must be less than ceiling')
+      end
+
+      def validate_adaptive_dca_smart_intervals_exclusivity
+        return unless adaptive_dca_enabled? && @force_smart_intervals
+
+        errors.add(:adaptive_dca_enabled, 'Adaptive DCA and Smart Intervals cannot be enabled at the same time')
       end
     end
   end

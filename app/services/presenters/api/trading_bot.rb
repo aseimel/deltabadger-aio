@@ -14,7 +14,7 @@ module Presenters
         daily_transaction_aggregates = bot.daily_transaction_aggregates.order(created_at: :desc)
         skipped_transactions = bot.transactions.skipped.limit(10).order(created_at: :desc)
         logs = bot.transactions.limit(10).order(created_at: :desc)
-        {
+        result = {
           id: bot.id,
           bot_type: bot.bot_type,
           settings: bot.settings,
@@ -29,6 +29,8 @@ module Presenters
           nextResultFetchingTimestamp: next_result_fetching_timestamp(bot),
           nextTransactionTimestamp: next_transaction_timestamp(bot)
         }
+        result[:adaptiveDca] = bot.adaptive_dca_status if bot.respond_to?(:adaptive_dca_status) && bot.adaptive_dca_enabled?
+        result
       end
 
       private

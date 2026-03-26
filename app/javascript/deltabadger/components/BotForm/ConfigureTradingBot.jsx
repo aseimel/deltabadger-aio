@@ -48,6 +48,10 @@ export const ConfigureTradingBot = ({ showLimitOrders, currentExchange, handleRe
   const [currencyOfMinimum, setCurrencyOfMinimum] = useState(QUOTES[0]);
   const [priceRangeEnabled, setPriceRangeEnabled] = useState(false)
   const [priceRange, setPriceRange] = useState({ low: '0', high: '0' })
+  const [adaptiveDcaEnabled, setAdaptiveDcaEnabled] = useState(false)
+  const [adaptiveDcaAggressiveness, setAdaptiveDcaAggressiveness] = useState('moderate')
+  const [adaptiveDcaFloorPct, setAdaptiveDcaFloorPct] = useState('30')
+  const [adaptiveDcaCeilingPct, setAdaptiveDcaCeilingPct] = useState('250')
   const node = useRef()
 
   const validQuotesForSelectedBase = () => {
@@ -256,6 +260,22 @@ export const ConfigureTradingBot = ({ showLimitOrders, currentExchange, handleRe
     }
   }
 
+  const handleAdaptiveDcaToggle = () => {
+    const newValue = !adaptiveDcaEnabled
+    setAdaptiveDcaEnabled(newValue)
+    if (newValue) {
+      setForceSmartIntervals(false)
+    }
+  }
+
+  const handleSmartIntervalsToggle = () => {
+    const newValue = !forceSmartIntervals
+    setForceSmartIntervals(newValue)
+    if (newValue) {
+      setAdaptiveDcaEnabled(false)
+    }
+  }
+
   const _handleSubmit = (evt, smartIntervalsValue) => {
     evt.preventDefault();
     const botParams = {
@@ -271,7 +291,11 @@ export const ConfigureTradingBot = ({ showLimitOrders, currentExchange, handleRe
       priceRangeEnabled,
       priceRange,
       useSubaccount,
-      selectedSubaccount
+      selectedSubaccount,
+      adaptiveDcaEnabled,
+      adaptiveDcaAggressiveness,
+      adaptiveDcaFloorPct: parseInt(adaptiveDcaFloorPct) || 30,
+      adaptiveDcaCeilingPct: parseInt(adaptiveDcaCeilingPct) || 250
     }
     !disableSubmit && handleSubmit(botParams);
   }
@@ -437,12 +461,13 @@ export const ConfigureTradingBot = ({ showLimitOrders, currentExchange, handleRe
 
           <label
               className="alert alert-primary"
-              disabled={!forceSmartIntervals}
+              disabled={!forceSmartIntervals || adaptiveDcaEnabled}
           >
             <input
                 type="checkbox"
                 checked={forceSmartIntervals}
-                onChange={() => setForceSmartIntervals(!forceSmartIntervals)}
+                onChange={handleSmartIntervalsToggle}
+                disabled={adaptiveDcaEnabled}
             />
             <div>
               <RawHTML tag="span">{splitTranslation(I18n.t('bot.force_smart_intervals_html', {currency: currencyOfMinimum}))[0]}</RawHTML>
@@ -521,6 +546,57 @@ export const ConfigureTradingBot = ({ showLimitOrders, currentExchange, handleRe
                 size={ Math.max(priceRange.high.length, 1) }
               />
               <RawHTML tag="span">{splitTranslation(I18n.t(isSellOffer() ? 'bot.price_range_sell_html' :'bot.price_range_buy_html', {quote: quote, base: base}))[2]}</RawHTML>
+            </div>
+          </label>
+
+          <label
+            className="alert alert-primary"
+            disabled={!adaptiveDcaEnabled}
+          >
+            <input
+              type="checkbox"
+              checked={adaptiveDcaEnabled}
+              onChange={handleAdaptiveDcaToggle}
+            />
+            <div>
+              <span>{I18n.t('bot.adaptive_dca.label')}</span>
+              {adaptiveDcaEnabled && (
+                <div className="adaptive-dca-settings">
+                  <small>{I18n.t('bot.adaptive_dca.hourly_note')}</small>
+                  <div className="adaptive-dca-settings__row">
+                    <span>{I18n.t('bot.adaptive_dca.aggressiveness')}</span>
+                    <select
+                      value={adaptiveDcaAggressiveness}
+                      onChange={e => setAdaptiveDcaAggressiveness(e.target.value)}
+                      className="bot-input bot-input--select bot-input--paper-bg"
+                    >
+                      <option value="conservative">{I18n.t('bot.adaptive_dca.conservative')}</option>
+                      <option value="moderate">{I18n.t('bot.adaptive_dca.moderate')}</option>
+                      <option value="aggressive">{I18n.t('bot.adaptive_dca.aggressive')}</option>
+                    </select>
+                  </div>
+                  <div className="adaptive-dca-settings__row">
+                    <span>{I18n.t('bot.adaptive_dca.floor')}</span>
+                    <input
+                      type="text"
+                      className="bot-input bot-input--sizable"
+                      value={adaptiveDcaFloorPct}
+                      onChange={e => setAdaptiveDcaFloorPct(e.target.value)}
+                      size={Math.max(adaptiveDcaFloorPct.toString().length, 2)}
+                    /> %
+                  </div>
+                  <div className="adaptive-dca-settings__row">
+                    <span>{I18n.t('bot.adaptive_dca.ceiling')}</span>
+                    <input
+                      type="text"
+                      className="bot-input bot-input--sizable"
+                      value={adaptiveDcaCeilingPct}
+                      onChange={e => setAdaptiveDcaCeilingPct(e.target.value)}
+                      size={Math.max(adaptiveDcaCeilingPct.toString().length, 2)}
+                    /> %
+                  </div>
+                </div>
+              )}
             </div>
           </label>
 

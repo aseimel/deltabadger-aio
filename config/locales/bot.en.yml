@@ -166,6 +166,19 @@ en:
         taker_fee: "Taker"
         withdrawal_fee: "Withdrawal (₿)"
         additional_title: "Two-way bot"
+        adaptive_dca:
+            label: "Adaptive pricing — spend more during dips, less during peaks"
+            hourly_note: "Executes hourly. Your daily amount is automatically split into 24 hourly orders, each scaled by current price conditions."
+            aggressiveness: "Sensitivity"
+            conservative: "Conservative (gentle scaling)"
+            moderate: "Moderate (balanced)"
+            aggressive: "Aggressive (strong scaling)"
+            floor: "Min spend per hour"
+            ceiling: "Max spend per hour"
+            effective_rate: "%{amount}/h (baseline: %{baseline}/h %{quote})"
+            belief_price: "Fair price estimate: %{price} %{quote}"
+            calibrating: "Calibrating — the model is learning current price levels..."
+            calibrating_short: "Calibrating..."
         smart_intervals_disclaimer: 'Orders size on %{exchange} is defined in %{currency}. The minimum order size is %{minimum}%{currency}.'
         smart_intervals_disclaimer_base: 'Orders size on %{exchange} is defined in %{currency}. The minimum order size is %{minimum}%{currency}.'
         smart_intervals_disclaimer_quote: 'The minimum order size is %{minimum}%{currency}.'

@@ -65,7 +65,11 @@ const BotTemplate = ({
     price_range: [0, 0],
     use_subaccount: false,
     selected_subaccount: '',
-    type: 'buy'
+    type: 'buy',
+    adaptive_dca_enabled: false,
+    adaptive_dca_aggressiveness: 'moderate',
+    adaptive_dca_floor_pct: 30,
+    adaptive_dca_ceiling_pct: 250
   };
 
   const { id, settings = defaultSettings, status, exchangeName, exchangeId, nextResultFetchingTimestamp, nextTransactionTimestamp } = bot || { settings: defaultSettings };
@@ -88,6 +92,10 @@ const BotTemplate = ({
   const [useSubaccount,setUseSubaccounts] = useState(settings.use_subaccount !== undefined ? settings.use_subaccount : defaultSettings.use_subaccount);
   const [selectedSubaccount, setSelectedSubaccount] = useState(settings.selected_subaccount || defaultSettings.selected_subaccount);
   const [subaccountsList, setSubaccountsList] = useState(['']);
+  const [adaptiveDcaEnabled, setAdaptiveDcaEnabled] = useState(settings.adaptive_dca_enabled !== undefined ? settings.adaptive_dca_enabled : defaultSettings.adaptive_dca_enabled);
+  const [adaptiveDcaAggressiveness, setAdaptiveDcaAggressiveness] = useState(settings.adaptive_dca_aggressiveness || defaultSettings.adaptive_dca_aggressiveness);
+  const [adaptiveDcaFloorPct, setAdaptiveDcaFloorPct] = useState((settings.adaptive_dca_floor_pct !== undefined ? settings.adaptive_dca_floor_pct : defaultSettings.adaptive_dca_floor_pct).toString());
+  const [adaptiveDcaCeilingPct, setAdaptiveDcaCeilingPct] = useState((settings.adaptive_dca_ceiling_pct !== undefined ? settings.adaptive_dca_ceiling_pct : defaultSettings.adaptive_dca_ceiling_pct).toString());
 
   const isStarting = startingBotIds.includes(id);
   const working = status === 'scheduled'
@@ -107,6 +115,22 @@ const BotTemplate = ({
     isLimitSelected() ? setType('market') : setType('limit')
   }
 
+  const handleAdaptiveDcaToggle = () => {
+    const newValue = !adaptiveDcaEnabled
+    setAdaptiveDcaEnabled(newValue)
+    if (newValue) {
+      setForceSmartIntervals(false)
+    }
+  }
+
+  const handleSmartIntervalsToggle = () => {
+    const newValue = !forceSmartIntervals
+    setForceSmartIntervals(newValue)
+    if (newValue) {
+      setAdaptiveDcaEnabled(false)
+    }
+  }
+
   const hasConfigurationChanged = () => {
     const newSettings= {
       order_type: type,
@@ -116,7 +140,11 @@ const BotTemplate = ({
       smartIntervalsValue,
       percentage: isLimitSelected() ? percentage && percentage.trim() : undefined,
       useSubaccount,
-      selectedSubaccount
+      selectedSubaccount,
+      adaptiveDcaEnabled,
+      adaptiveDcaAggressiveness,
+      adaptiveDcaFloorPct,
+      adaptiveDcaCeilingPct
     }
 
     const oldSettings = {
@@ -127,7 +155,11 @@ const BotTemplate = ({
       smartIntervalsValue: settings.smart_intervals_value,
       percentage: settings.order_type === 'limit' ? percentage && percentage.trim() : undefined,
       useSubaccount: settings.use_subaccount,
-      selectedSubaccount: settings.selected_subaccount
+      selectedSubaccount: settings.selected_subaccount,
+      adaptiveDcaEnabled: settings.adaptive_dca_enabled || false,
+      adaptiveDcaAggressiveness: settings.adaptive_dca_aggressiveness || 'moderate',
+      adaptiveDcaFloorPct: (settings.adaptive_dca_floor_pct || 30).toString(),
+      adaptiveDcaCeilingPct: (settings.adaptive_dca_ceiling_pct || 250).toString()
     }
 
     return !_.isEqual(newSettings, oldSettings)
@@ -165,7 +197,11 @@ const BotTemplate = ({
       priceRangeEnabled,
       priceRange,
       useSubaccount,
-      selectedSubaccount
+      selectedSubaccount,
+      adaptiveDcaEnabled,
+      adaptiveDcaAggressiveness,
+      adaptiveDcaFloorPct: parseInt(adaptiveDcaFloorPct) || 30,
+      adaptiveDcaCeilingPct: parseInt(adaptiveDcaCeilingPct) || 250
     }
 
     const continueParams = {
@@ -352,6 +388,10 @@ const BotTemplate = ({
         low: (settings.price_range && settings.price_range[0] !== undefined ? settings.price_range[0] : defaultSettings.price_range[0]).toString(),
         high: (settings.price_range && settings.price_range[1] !== undefined ? settings.price_range[1] : defaultSettings.price_range[1]).toString()
       });
+      setAdaptiveDcaEnabled(settings.adaptive_dca_enabled !== undefined ? settings.adaptive_dca_enabled : defaultSettings.adaptive_dca_enabled);
+      setAdaptiveDcaAggressiveness(settings.adaptive_dca_aggressiveness || defaultSettings.adaptive_dca_aggressiveness);
+      setAdaptiveDcaFloorPct((settings.adaptive_dca_floor_pct !== undefined ? settings.adaptive_dca_floor_pct : defaultSettings.adaptive_dca_floor_pct).toString());
+      setAdaptiveDcaCeilingPct((settings.adaptive_dca_ceiling_pct !== undefined ? settings.adaptive_dca_ceiling_pct : defaultSettings.adaptive_dca_ceiling_pct).toString());
     }
   }, [bot?.id]); // Only run when bot ID changes
 
@@ -380,6 +420,16 @@ const BotTemplate = ({
                 {profitLoss.positive ? '+' : ''}
                 {profitLoss.percentage}%
               </span>
+            </div>
+          )}
+          {bot.adaptiveDca && bot.adaptiveDca.enabled && !bot.adaptiveDca.cold_start && (
+            <div className={`bot-tile__adaptive-badge ${bot.adaptiveDca.current_multiplier >= 1 ? 'text-success' : 'text-danger'}`}>
+              <span>{bot.adaptiveDca.current_multiplier.toFixed(2)}&times;</span>
+            </div>
+          )}
+          {bot.adaptiveDca && bot.adaptiveDca.enabled && bot.adaptiveDca.cold_start && (
+            <div className="bot-tile__adaptive-badge text-muted">
+              <span>{I18n.t('bot.adaptive_dca.calibrating_short')}</span>
             </div>
           )}
         </div>
@@ -550,14 +600,14 @@ const BotTemplate = ({
 
         <label
           className="alert alert-primary"
-          disabled={!forceSmartIntervals}
+          disabled={!forceSmartIntervals || adaptiveDcaEnabled}
         >
           <input
             type="checkbox"
             className="hide-when-running"
             checked={forceSmartIntervals}
-            onChange={() => setForceSmartIntervals(!forceSmartIntervals)}
-            disabled={working}
+            onChange={handleSmartIntervalsToggle}
+            disabled={working || adaptiveDcaEnabled}
           />
           <div>
             <RawHTML tag="span">{splitTranslation(I18n.t('bot.force_smart_intervals_html', {currency: currencyOfMinimum}))[0]}</RawHTML>
@@ -638,6 +688,80 @@ const BotTemplate = ({
               size={ Math.max(priceRange.high.length, 1) }
             />
             <RawHTML tag="span">{splitTranslation(I18n.t((isLegacySell() || isSellOffer()) ? 'bot.price_range_sell_html' :'bot.price_range_buy_html', {quote: quoteName, base: baseName}))[2]}</RawHTML>
+          </div>
+        </label>
+
+        <label
+          className="alert alert-primary"
+          disabled={!adaptiveDcaEnabled}
+        >
+          <input
+            type="checkbox"
+            className="hide-when-running"
+            checked={adaptiveDcaEnabled}
+            onChange={handleAdaptiveDcaToggle}
+            disabled={working}
+          />
+          <div>
+            <span>{I18n.t('bot.adaptive_dca.label')}</span>
+            {adaptiveDcaEnabled && (
+              <div className="adaptive-dca-settings">
+                <small>{I18n.t('bot.adaptive_dca.hourly_note')}</small>
+                <div className="adaptive-dca-settings__row">
+                  <span>{I18n.t('bot.adaptive_dca.aggressiveness')}</span>
+                  <select
+                    value={adaptiveDcaAggressiveness}
+                    onChange={e => setAdaptiveDcaAggressiveness(e.target.value)}
+                    className="bot-input bot-input--select bot-input--paper-bg"
+                    disabled={working}
+                  >
+                    <option value="conservative">{I18n.t('bot.adaptive_dca.conservative')}</option>
+                    <option value="moderate">{I18n.t('bot.adaptive_dca.moderate')}</option>
+                    <option value="aggressive">{I18n.t('bot.adaptive_dca.aggressive')}</option>
+                  </select>
+                </div>
+                <div className="adaptive-dca-settings__row">
+                  <span>{I18n.t('bot.adaptive_dca.floor')}</span>
+                  <input
+                    type="text"
+                    className="bot-input bot-input--sizable"
+                    value={adaptiveDcaFloorPct}
+                    onChange={e => setAdaptiveDcaFloorPct(e.target.value)}
+                    size={Math.max(adaptiveDcaFloorPct.toString().length, 2)}
+                    disabled={working}
+                  /> %
+                </div>
+                <div className="adaptive-dca-settings__row">
+                  <span>{I18n.t('bot.adaptive_dca.ceiling')}</span>
+                  <input
+                    type="text"
+                    className="bot-input bot-input--sizable"
+                    value={adaptiveDcaCeilingPct}
+                    onChange={e => setAdaptiveDcaCeilingPct(e.target.value)}
+                    size={Math.max(adaptiveDcaCeilingPct.toString().length, 2)}
+                    disabled={working}
+                  /> %
+                </div>
+              </div>
+            )}
+            {adaptiveDcaEnabled && bot.adaptiveDca && !bot.adaptiveDca.cold_start && (
+              <div className="adaptive-dca-status">
+                <small>
+                  <span className={`adaptive-dca-status__multiplier ${bot.adaptiveDca.current_multiplier >= 1 ? 'text-success' : 'text-danger'}`}>
+                    {bot.adaptiveDca.current_multiplier.toFixed(2)}&times;
+                  </span>
+                  {' '}
+                  <span>{I18n.t('bot.adaptive_dca.effective_rate', {amount: parseFloat(bot.adaptiveDca.effective_hourly_amount).toFixed(2), baseline: parseFloat(bot.adaptiveDca.baseline_hourly_amount).toFixed(2), quote: quoteName})}</span>
+                  <br/>
+                  <span>{I18n.t('bot.adaptive_dca.belief_price', {price: parseFloat(bot.adaptiveDca.ewma_belief_price).toFixed(2), quote: quoteName})}</span>
+                </small>
+              </div>
+            )}
+            {adaptiveDcaEnabled && bot.adaptiveDca && bot.adaptiveDca.cold_start && (
+              <div className="adaptive-dca-status">
+                <small className="text-muted">{I18n.t('bot.adaptive_dca.calibrating')}</small>
+              </div>
+            )}
           </div>
         </label>
       </form>

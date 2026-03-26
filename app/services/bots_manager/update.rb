@@ -18,6 +18,7 @@ module BotsManager
       validation = bot_validator.call(bot, user)
 
       if validation.success?
+        bot.set_missed_quote_amount if bot.respond_to?(:set_missed_quote_amount) && bot.settings_was != bot.settings
         bot.save!
         Result::Success.new(bot)
       else
