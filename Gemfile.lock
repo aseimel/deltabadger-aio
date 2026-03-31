@@ -323,7 +323,7 @@ GEM
     psych (5.1.2)
       stringio
     public_suffix (7.0.2)
-    puma (6.3.1)
+    puma (7.2.0)
       nio4r (~> 2.0)
     raabro (1.4.0)
     racc (1.8.1)
@@ -559,7 +559,7 @@ DEPENDENCIES
   oj (~> 3.16)
   pagy (~> 6.5)
   pg (>= 0.18, < 2.0)
-  puma (~> 6.3)
+  puma (~> 7.2)
   rack (= 2.2.20)
   rack-cors
   rack-mini-profiler (~> 3.3)
